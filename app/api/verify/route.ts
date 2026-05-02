@@ -1,3 +1,4 @@
+import Anthropic from "@anthropic-ai/sdk";
 import { NextRequest, NextResponse } from "next/server";
 import { runChecks, aggregateDecision } from "@/lib/verification";
 import { extractIDDocument, extractProofOfAddress, generateReasoning } from "@/lib/anthropic";
@@ -14,7 +15,7 @@ import type { IDExtraction, PoAExtraction, VerificationResult } from "@/lib/type
 // Event shapes:
 //   { stage: "extracting" | "checking" | "reasoning" }   — progress update
 //   { done: true, result: VerificationResult }            — final payload
-//   { error: string }                                     — pipeline failure
+//   { error: string; retryable: boolean }                 — pipeline failure
 //
 // Two modes:
 //   ?scenario=verified|review|reject  → mock extractions + real reasoning (1 Claude call)
@@ -187,6 +188,27 @@ export async function POST(request: NextRequest) {
           idExtraction = idOut.result;
           poaExtraction = poaOut.result;
           costs.push(idOut.cost, poaOut.cost);
+
+          // Non-document detection: if both extractions look like non-documents, bail early
+          const idIsBlank =
+            idExtraction.type === "UNKNOWN" &&
+            idExtraction.extraction_confidence === "LOW" &&
+            !idExtraction.name &&
+            !idExtraction.id_number;
+          const poaIsBlank =
+            poaExtraction.type === "UNKNOWN" &&
+            poaExtraction.extraction_confidence === "LOW" &&
+            !poaExtraction.name_on_document &&
+            !poaExtraction.address;
+
+          if (idIsBlank || poaIsBlank) {
+            const which = idIsBlank ? "identity document" : "proof of address";
+            send({
+              error: `The ${which} doesn't appear to be a valid Nigerian ID or proof-of-address document. Please upload a clear photo of a NIN slip, driver's license, utility bill, or bank statement.`,
+              retryable: false,
+            });
+            return;
+          }
         }
 
         // Stage 2: Deterministic checks (synchronous — advances immediately)
@@ -241,12 +263,26 @@ export async function POST(request: NextRequest) {
         });
       } catch (err) {
         console.error("[KYC] Pipeline error:", err);
-        send({
-          error:
-            err instanceof Error
-              ? err.message
-              : "Document extraction failed. Ensure images are clear and try again.",
-        });
+
+        if (err instanceof Anthropic.RateLimitError) {
+          send({
+            error: "The AI service is temporarily busy. Please wait a moment and try again.",
+            retryable: true,
+          });
+        } else if (err instanceof Anthropic.APIError) {
+          send({
+            error: "The AI service returned an unexpected error. Please try again in a moment.",
+            retryable: true,
+          });
+        } else {
+          send({
+            error:
+              err instanceof Error
+                ? err.message
+                : "Document extraction failed. Ensure images are clear and try again.",
+            retryable: false,
+          });
+        }
       } finally {
         controller.close();
       }

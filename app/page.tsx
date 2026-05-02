@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
+import { AlertCircle, RotateCcw } from "lucide-react";
 import { DocumentUploader, type DemoScenario } from "@/components/DocumentUploader";
 import { VerificationResult } from "@/components/VerificationResult";
 import { LoadingStages, type LoadingStage } from "@/components/LoadingStages";
@@ -13,22 +14,28 @@ type AppState = "idle" | "verifying" | "done";
 type VerifyEvent =
   | { stage: LoadingStage }
   | { done: true; result: VResult }
-  | { error: string };
+  | { error: string; retryable: boolean };
 
 export default function Home() {
   const [appState, setAppState] = useState<AppState>("idle");
   const [loadingStage, setLoadingStage] = useState<LoadingStage>("extracting");
   const [result, setResult] = useState<VResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [isRetryable, setIsRetryable] = useState(false);
+  const lastVerifyParams = useRef<{ idFile: File | null; poaFile: File | null; scenario?: DemoScenario } | null>(null);
 
   async function handleVerify(
     idFile: File | null,
     poaFile: File | null,
     scenario?: DemoScenario
   ) {
+    lastVerifyParams.current = { idFile, poaFile, scenario };
     setAppState("verifying");
     setLoadingStage("extracting");
     setError(null);
+    setIsRetryable(false);
+
+    let pipelineCompleted = false;
 
     try {
       const formData = new FormData();
@@ -69,15 +76,27 @@ export default function Home() {
           if ("stage" in event) {
             setLoadingStage(event.stage);
           } else if ("error" in event) {
-            throw new Error(event.error);
+            pipelineCompleted = true;
+            setError(event.error);
+            setIsRetryable(event.retryable);
+            setAppState("idle");
           } else if ("done" in event && event.done) {
+            pipelineCompleted = true;
             setResult(event.result);
             setAppState("done");
           }
         }
       }
+
+      // Stream ended without a done or error event — network failure mid-stream
+      if (!pipelineCompleted) {
+        setError("The connection was interrupted. Please check your network and try again.");
+        setIsRetryable(true);
+        setAppState("idle");
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong — please try again");
+      setIsRetryable(false);
       setAppState("idle");
     }
   }
@@ -86,6 +105,13 @@ export default function Home() {
     setAppState("idle");
     setResult(null);
     setError(null);
+    setIsRetryable(false);
+    lastVerifyParams.current = null;
+  }
+
+  function handleRetry() {
+    const params = lastVerifyParams.current;
+    if (params) handleVerify(params.idFile, params.poaFile, params.scenario);
   }
 
   function handleDemoScenario(scenario: DemoScenario) {
@@ -127,16 +153,39 @@ export default function Home() {
 
       {/* Main content */}
       <section className="max-w-5xl mx-auto px-4 sm:px-6 py-8 sm:py-10">
-        {error && (
-          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm leading-relaxed">
-            {error}
-          </div>
-        )}
-
         {appState === "done" && result ? (
           <VerificationResult result={result} onReset={handleReset} />
         ) : appState === "verifying" ? (
           <LoadingStages current={loadingStage} />
+        ) : error ? (
+          <div className="bg-white rounded-2xl border border-red-200 p-6 sm:p-8 shadow-sm">
+            <div className="flex items-start gap-3 mb-6">
+              <div className="w-9 h-9 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
+                <AlertCircle className="w-5 h-5 text-red-600" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-gray-900 mb-1">Verification failed</p>
+                <p className="text-sm text-gray-600 leading-relaxed">{error}</p>
+              </div>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-3">
+              {isRetryable && (
+                <button
+                  onClick={handleRetry}
+                  className="flex items-center justify-center gap-2 bg-blue-700 hover:bg-blue-800 text-white font-semibold py-2.5 px-5 rounded-xl transition-colors text-sm"
+                >
+                  <RotateCcw className="w-4 h-4" />
+                  Try again
+                </button>
+              )}
+              <button
+                onClick={handleReset}
+                className="flex items-center justify-center gap-2 border border-gray-200 bg-white hover:bg-gray-50 text-gray-700 font-semibold py-2.5 px-5 rounded-xl transition-colors text-sm"
+              >
+                Start over
+              </button>
+            </div>
+          </div>
         ) : (
           <DocumentUploader
             onVerify={handleVerify}
