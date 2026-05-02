@@ -130,4 +130,4 @@ Part of an ongoing exploration into how AI can compress compliance workflows in 
 
 ---
 
-**Author:** Olumide Adeniyi — [LinkedIn](https://linkedin.com/in/your-profile-here)
+**Author:** Olumide Adeniyi — [LinkedIn](https://linkedin.com/in/olumide-adeniyi/)
