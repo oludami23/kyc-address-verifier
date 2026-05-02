@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { DocumentUploader } from "@/components/DocumentUploader";
+import { DocumentUploader, type DemoScenario } from "@/components/DocumentUploader";
 import { VerificationResult } from "@/components/VerificationResult";
 import { ProductExplainer } from "@/components/ProductExplainer";
 import type { VerificationResult as VResult } from "@/lib/types";
@@ -13,7 +13,11 @@ export default function Home() {
   const [result, setResult] = useState<VResult | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  async function handleVerify(idFile: File | null, poaFile: File | null) {
+  async function handleVerify(
+    idFile: File | null,
+    poaFile: File | null,
+    scenario?: DemoScenario
+  ) {
     setAppState("verifying");
     setError(null);
 
@@ -22,7 +26,8 @@ export default function Home() {
       if (idFile) formData.append("id_document", idFile);
       if (poaFile) formData.append("proof_of_address", poaFile);
 
-      const response = await fetch("/api/verify", { method: "POST", body: formData });
+      const url = scenario ? `/api/verify?scenario=${scenario}` : "/api/verify";
+      const response = await fetch(url, { method: "POST", body: formData });
 
       if (!response.ok) {
         const body = await response.json().catch(() => ({}));
@@ -44,9 +49,8 @@ export default function Home() {
     setError(null);
   }
 
-  // For Day 1 mock: call with null files — the API returns mock data regardless
-  function handleSample() {
-    handleVerify(null, null);
+  function handleDemoScenario(scenario: DemoScenario) {
+    handleVerify(null, null, scenario);
   }
 
   return (
@@ -93,7 +97,7 @@ export default function Home() {
         ) : (
           <DocumentUploader
             onVerify={handleVerify}
-            onSample={handleSample}
+            onDemoScenario={handleDemoScenario}
             isVerifying={appState === "verifying"}
           />
         )}

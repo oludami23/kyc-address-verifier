@@ -3,9 +3,11 @@
 import { useState, useRef, DragEvent, ChangeEvent } from "react";
 import { Upload, FileText, X, Loader2 } from "lucide-react";
 
+export type DemoScenario = "verified" | "review" | "reject";
+
 interface UploaderProps {
   onVerify: (idFile: File | null, poaFile: File | null) => void;
-  onSample: () => void;
+  onDemoScenario: (scenario: DemoScenario) => void;
   isVerifying: boolean;
 }
 
@@ -84,7 +86,36 @@ function UploadSlot({ label, sublabel, file, onFile, onClear }: SlotProps) {
   );
 }
 
-export function DocumentUploader({ onVerify, onSample, isVerifying }: UploaderProps) {
+const DEMO_SCENARIOS: {
+  scenario: DemoScenario;
+  label: string;
+  description: string;
+  buttonClass: string;
+}[] = [
+  {
+    scenario: "verified",
+    label: "Try: Verified",
+    description: "Clean match, recent bill, high confidence",
+    buttonClass:
+      "border border-green-200 bg-green-50 hover:bg-green-100 text-green-800",
+  },
+  {
+    scenario: "review",
+    label: "Try: Review required",
+    description: "Partial name match, 110-day-old bill",
+    buttonClass:
+      "border border-amber-200 bg-amber-50 hover:bg-amber-100 text-amber-800",
+  },
+  {
+    scenario: "reject",
+    label: "Try: Rejected",
+    description: "Name mismatch, expired document",
+    buttonClass:
+      "border border-red-200 bg-red-50 hover:bg-red-100 text-red-800",
+  },
+];
+
+export function DocumentUploader({ onVerify, onDemoScenario, isVerifying }: UploaderProps) {
   const [idFile, setIdFile] = useState<File | null>(null);
   const [poaFile, setPoaFile] = useState<File | null>(null);
 
@@ -110,38 +141,41 @@ export function DocumentUploader({ onVerify, onSample, isVerifying }: UploaderPr
         />
       </div>
 
-      <div className="flex items-center gap-4">
-        <button
-          onClick={() => onVerify(idFile, poaFile)}
-          disabled={!canVerify || isVerifying}
-          className="flex-1 flex items-center justify-center gap-2 bg-blue-700 hover:bg-blue-800 disabled:bg-gray-200 disabled:text-gray-400 text-white font-semibold py-3 px-6 rounded-xl transition-colors disabled:cursor-not-allowed"
-        >
-          {isVerifying ? (
-            <>
-              <Loader2 className="w-4 h-4 animate-spin" />
-              Verifying…
-            </>
-          ) : (
-            "Run verification"
-          )}
-        </button>
+      {/* Primary action */}
+      <button
+        onClick={() => onVerify(idFile, poaFile)}
+        disabled={!canVerify || isVerifying}
+        className="w-full flex items-center justify-center gap-2 bg-blue-700 hover:bg-blue-800 disabled:bg-gray-200 disabled:text-gray-400 text-white font-semibold py-3 px-6 rounded-xl transition-colors disabled:cursor-not-allowed mb-6"
+      >
+        {isVerifying ? (
+          <>
+            <Loader2 className="w-4 h-4 animate-spin" />
+            Verifying…
+          </>
+        ) : (
+          "Run verification"
+        )}
+      </button>
 
-        <span className="text-gray-300 text-sm font-medium">or</span>
-
-        <button
-          onClick={onSample}
-          disabled={isVerifying}
-          className="border border-gray-200 hover:border-gray-300 hover:bg-gray-50 text-gray-600 font-medium py-3 px-5 rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
-        >
-          Try with sample documents
-        </button>
-      </div>
-
-      {!canVerify && !isVerifying && (
-        <p className="text-xs text-gray-400 mt-3 text-center">
-          Upload both documents to run a real verification, or try the sample to see how it works.
+      {/* Demo scenario buttons */}
+      <div className="border-t border-gray-100 pt-5">
+        <p className="text-xs font-medium text-gray-400 uppercase tracking-widest mb-3">
+          Or try a demo scenario
         </p>
-      )}
+        <div className="grid grid-cols-3 gap-3">
+          {DEMO_SCENARIOS.map(({ scenario, label, description, buttonClass }) => (
+            <button
+              key={scenario}
+              onClick={() => onDemoScenario(scenario)}
+              disabled={isVerifying}
+              className={`text-left p-3 rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${buttonClass}`}
+            >
+              <p className="text-xs font-semibold leading-snug">{label}</p>
+              <p className="text-xs opacity-70 mt-0.5 leading-snug">{description}</p>
+            </button>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
