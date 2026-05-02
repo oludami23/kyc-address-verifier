@@ -1,6 +1,10 @@
 # KYC Address Verifier
 
-AI-powered KYC address verification for Nigerian fintechs. Upload an identity document (NIN slip or driver's license) and a proof of address (utility bill or bank statement) — the system extracts structured data from both using Claude vision, runs four deterministic compliance checks, and returns a structured verdict with auditable AI reasoning.
+AI-powered KYC address verification for Nigerian fintechs. Upload an identity document and a proof of address — the system extracts structured fields from both using Claude vision, runs four deterministic compliance checks, and returns a structured verdict with auditable reasoning in under 10 seconds.
+
+**Live demo:** https://kyc-address-verifier.vercel.app
+
+> [screenshot: VERIFIED verdict — to be added]
 
 **Built in 3 days as part of an application for Senior PM, New Product Launch at OkHi.**
 
@@ -8,37 +12,33 @@ AI-powered KYC address verification for Nigerian fintechs. Upload an identity do
 
 ## Why I built this
 
-Nigerian fintechs are required by the Central Bank of Nigeria to verify customer addresses before granting Tier 2 and Tier 3 account privileges. In practice, this means compliance officers manually comparing identity documents against utility bills — a process that doesn't scale and introduces human error into regulated decisions.
+Nigerian fintechs are required by the Central Bank of Nigeria to verify customer addresses before granting Tier 2 and Tier 3 account privileges — higher transaction limits, lending products, and cross-border transfers. In practice, this means compliance officers manually comparing identity documents against utility bills across thousands of onboardings daily. It doesn't scale, and it introduces human error into decisions that carry regulatory weight.
 
-OkHi has built the infrastructure to verify addresses physically. This prototype explores the complementary AI layer: automated document cross-checking that produces a structured, auditable verdict in seconds. Rather than replacing human judgment, it gives compliance teams a first-pass decision they can act on or escalate — with the reasoning already written.
-
-The Nigerian KYC context is specific: NIN slips and driver's licenses as primary ID, PHCN/IKEDC/DSTV bills and bank statements as proof of address, CBN's 90-day recency requirement. These constraints are baked into the verification logic.
+OkHi has built the physical infrastructure to verify addresses on the ground. This prototype explores the complementary layer: automated document cross-checking that produces a structured, auditable verdict a compliance team can act on or escalate — with the reasoning already written. Rather than replacing human judgment, it compresses the first-pass review from minutes to seconds and makes the decision trail legible to regulators.
 
 ---
 
 ## Architecture
 
-```
-POST /api/verify
-     │
-     ├─ Parse multipart form (id_document + proof_of_address)
-     │
-     ├─ Claude vision ──► extract ID fields (type, name, DOB, address, anomalies)
-     ├─ Claude vision ──► extract PoA fields (issuer, name, address, date, anomalies)
-     │   (two parallel calls)
-     │
-     ├─ Deterministic checks (lib/verification.ts)
-     │   ├─ Name match (token overlap with title stripping)
-     │   ├─ Address legibility (component count)
-     │   ├─ Document recency (90/180 day thresholds)
-     │   └─ Authenticity signals (confidence + anomaly count)
-     │
-     ├─ Decision aggregation (VERIFIED / REVIEW_REQUIRED / REJECTED)
-     │
-     └─ Claude reasoning ──► 2-3 sentence verdict + recommended action
+```mermaid
+flowchart TD
+    A[POST /api/verify] --> B[Parse multipart form\nid_document + proof_of_address]
+    B --> C[Claude vision — extract ID fields\ntype · name · DOB · address · anomalies]
+    B --> D[Claude vision — extract PoA fields\nissuer · name · address · date · anomalies]
+    C --> E[Deterministic checks\nlib/verification.ts]
+    D --> E
+    E --> F[Name match]
+    E --> G[Address legibility]
+    E --> H[Document recency]
+    E --> I[Authenticity signals]
+    F & G & H & I --> J[Decision aggregation\nVERIFIED · REVIEW_REQUIRED · REJECTED]
+    J --> K[Claude reasoning\n2-3 sentence verdict + recommended action]
+    K --> L[SSE stream → client]
 ```
 
-Three model calls instead of one: extraction is deterministic-leaning and benefits from focused prompts; reasoning is generative and gets the structured check results as context. The separation makes each call cheaper and the system easier to audit.
+Three model calls instead of one: extraction is structured and benefits from focused prompts; reasoning is generative and gets the check results as context. The separation keeps each call cheap and the system easy to audit — every decision traces back to discrete, named checks.
+
+The client reads pipeline stage events over Server-Sent Events so the progress indicator advances in real time rather than blocking on a single round-trip.
 
 ---
 
@@ -49,7 +49,7 @@ Three model calls instead of one: extraction is deterministic-leaning and benefi
 {
   "decision": "VERIFIED",
   "confidence": 0.92,
-  "reasoning": "The NIN slip and IKEDC utility bill belong to the same individual. The abbreviated name on the bill is consistent with the full name on the ID — a common pattern on Nigerian utility accounts. The address matches across both documents and the bill is within the required 90-day window.",
+  "reasoning": "The NIN slip and IKEDC utility bill belong to the same individual. The abbreviated name on the bill (O. A. ADEYEMI) is consistent with the full name on the ID — a common pattern on Nigerian utility accounts. The address matches across both documents and the bill is within the required 90-day window.",
   "recommended_action": "Approve KYC tier upgrade. No manual review required."
 }
 ```
@@ -58,9 +58,9 @@ Three model calls instead of one: extraction is deterministic-leaning and benefi
 ```json
 {
   "decision": "REVIEW_REQUIRED",
-  "confidence": 0.71,
-  "reasoning": "The name on the utility bill ('TUNDE BAKARE') partially matches the ID ('BABATUNDE OLUWAFEMI BAKARE') — key surname present, first name abbreviated differently than expected. Compliance officer should confirm identity before approving.",
-  "recommended_action": "Escalate to manual review. Request customer to provide a second proof of address with full name."
+  "confidence": 0.68,
+  "reasoning": "The name on the utility bill ('O. A. ADEYEMI') partially matches the driver's license ('OLUMIDE ADENIYI JAMES ADEYEMI') — surname present, first name reduced to an initial. The bill date of 11 January 2026 is 110 days old, exceeding the 90-day threshold but within the 180-day secondary limit. Either factor alone would trigger review; together they warrant manual confirmation before approval.",
+  "recommended_action": "Escalate to manual review. Request customer to provide a more recent proof of address or a second document with full name."
 }
 ```
 
@@ -68,9 +68,9 @@ Three model calls instead of one: extraction is deterministic-leaning and benefi
 ```json
 {
   "decision": "REJECTED",
-  "confidence": 0.41,
-  "reasoning": "The utility bill is dated 14 months ago, exceeding the CBN 180-day limit. Additionally, the AI flagged a font inconsistency in the customer name field on the bill. Both failures independently warrant rejection.",
-  "recommended_action": "Reject KYC submission. Request a utility bill dated within the last 90 days."
+  "confidence": 0.31,
+  "reasoning": "The name on the DSTV bill ('JOHN ADEBAYO SMITH') does not match the name on the NIN slip ('CHIDINMA UCHENNA OKONKWO') — no shared tokens. The bill address ('Block 5 Flat 2') is incomplete and fails legibility checks. Additionally, the AI flagged two anomalies on the NIN slip: a blurry ID number field and compression artefacts inconsistent with official print quality. All four checks failed independently.",
+  "recommended_action": "Reject KYC submission. Request a utility bill in the applicant's name with a complete address, issued within the last 90 days."
 }
 ```
 
@@ -78,19 +78,56 @@ Three model calls instead of one: extraction is deterministic-leaning and benefi
 
 ## Stack
 
-- **Next.js 14** App Router, TypeScript
-- **Tailwind CSS** for styling
-- **Anthropic Claude Sonnet** for vision extraction and reasoning
-- **Vercel** for hosting
+| Layer | Choice |
+|---|---|
+| Framework | Next.js 16 App Router, TypeScript |
+| Styling | Tailwind CSS |
+| AI | Anthropic Claude Sonnet 4.5 (vision + reasoning) |
+| Hosting | Vercel |
 
 ---
 
-## Limitations and v2 roadmap
+## Local setup
 
-- **v1 limitation:** No live document scanning — upload only. Mobile camera capture would significantly improve conversion.
-- **v1 limitation:** JPG/PNG only — PDF uploads are rejected with a clear error. PDF-to-image conversion is on the v2 roadmap.
-- **v2:** PDF document support via server-side conversion before vision extraction
-- **v2:** NIMC API integration for NIN verification against the national database
-- **v2:** BVN cross-check for bank statement verification
-- **v2:** Audit log with tamper-evident verdict storage for regulatory review
-- **v2:** Webhook support so this can be embedded in a fintech's existing KYC pipeline
+```bash
+git clone https://github.com/oludami23/kyc-address-verifier.git
+cd kyc-address-verifier
+npm install
+
+# Add your Anthropic API key
+echo "ANTHROPIC_API_KEY=sk-ant-..." > .env.local
+
+npm run dev
+# → http://localhost:3000
+```
+
+The three demo scenario buttons work without an API key (they use mock extractions and run one real reasoning call). Real document upload requires a valid key.
+
+---
+
+## Known limitations
+
+- **Name abbreviation edge cases:** The name-match algorithm handles initial abbreviations (O. A. ADEYEMI → OLUMIDE ADENIYI ADEYEMI) and token reordering. It does not handle informal shortenings where the short form is not a prefix of the full name — e.g. "TUNDE" will not match "BABATUNDE" since neither is a prefix of the other. A phonetic similarity layer is on the v2 roadmap.
+- **PDF not supported:** The system accepts JPG and PNG only. PDF uploads are rejected with a clear error message. PDF-to-image conversion is planned for v2.
+- **Single upload per verification:** Each run takes one ID document and one proof of address. Batch processing for compliance teams reviewing multiple submissions is a v2 feature.
+- **No document liveness check:** The system reads images as presented. It cannot detect whether a document was photographed from a screen rather than held in hand.
+
+---
+
+## v2 roadmap
+
+- **PDF support** — server-side conversion before vision extraction
+- **NIMC API integration** — verify NIN numbers against the national identity database in real time
+- **BVN cross-check** — validate bank statement submissions against the Bank Verification Number registry
+- **Audit log** — tamper-evident verdict storage with full extraction payloads for regulatory review
+- **Batch processing** — queue-based pipeline for compliance teams reviewing high volumes
+- **Webhook support** — embed verification results into an existing fintech KYC pipeline via outbound events
+- **Phonetic name matching** — handle informal shortenings and Yoruba/Igbo/Hausa name variants not covered by prefix matching
+
+---
+
+Part of an ongoing exploration into how AI can compress compliance workflows in African fintech without removing the audit trail regulators require.
+
+---
+
+**Author:** Olumide Adeniyi — [LinkedIn](https://linkedin.com/in/your-profile-here)
