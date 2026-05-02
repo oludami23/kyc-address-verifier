@@ -88,6 +88,8 @@ Three model calls instead of one: extraction is deterministic-leaning and benefi
 ## Limitations and v2 roadmap
 
 - **v1 limitation:** No live document scanning — upload only. Mobile camera capture would significantly improve conversion.
+- **v1 limitation:** JPG/PNG only — PDF uploads are rejected with a clear error. PDF-to-image conversion is on the v2 roadmap.
+- **v2:** PDF document support via server-side conversion before vision extraction
 - **v2:** NIMC API integration for NIN verification against the national database
 - **v2:** BVN cross-check for bank statement verification
 - **v2:** Audit log with tamper-evident verdict storage for regulatory review
