@@ -4,9 +4,14 @@ AI-powered KYC address verification for Nigerian fintechs. Upload an identity do
 
 **Live demo:** https://kyc-address-verifier.vercel.app
 
-> [screenshot: VERIFIED verdict — to be added]
-
 **Built in 3 days as part of an application for Senior PM, New Product Launch at OkHi.**
+
+---
+
+| Verified | Review required | Rejected |
+|:---:|:---:|:---:|
+| ![Verified verdict](docs/verified-verdict.png) | ![Review required verdict](docs/review-verdict.png) | ![Rejected verdict](docs/rejected-verdict.png) |
+| Clean match, recent bill, high confidence | Partial name match, 110-day-old bill | Name mismatch, incomplete address, anomalies flagged |
 
 ---
 
