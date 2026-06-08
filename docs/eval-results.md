@@ -1,8 +1,51 @@
 # KYC Verifier — Eval Results
 
-**Eval harness:** `tests/eval-runner.mjs`  
+**Eval harness:** `tests/eval-runner.mjs` | **RAG eval:** `tests/rag-eval.mjs`  
 **Test cases:** `tests/eval-cases.json`  
-**Latest run:** 2026-06-08 (v1.1)
+**Latest run:** 2026-06-08 (Phase C)
+
+---
+
+## Phase C — RAG Compliance Layer
+
+**Run date:** 2026-06-08
+
+### RAG Retrieval Accuracy
+
+| Metric | Score |
+|---|---|
+| **Retrieval accuracy** | **15/15 (100%)** |
+| Required chunks in top-4 | 15/15 |
+| Required chunk ranked #1 | 14/15 |
+
+All 15 eval cases retrieved their required compliance chunk(s) within the top-4 results. The TF-IDF scorer correctly prioritises:
+- `poa-recency` for document recency failures
+- `id-drivers-licence` for DL expiry and format scenarios
+- `name-matching` + `name-nigerian-patterns` for name mismatch/partial cases
+- `aml-enhanced-cdd` for multi-failure REJECTED cases
+- `authenticity-standards` for LOW confidence / anomaly cases
+
+### What Phase C adds
+
+| Component | Change |
+|---|---|
+| `lib/rag.ts` (new) | 15-chunk compliance KB + TF-IDF indexer + `buildRetrievalQuery()` + `retrieveCompliance()` |
+| `lib/types.ts` | `RegulationRef` interface; `regulatory_context?: RegulationRef[]` on `VerificationResult` |
+| `lib/anthropic.ts` | `regulatoryContext?` param on `generateReasoning()` |
+| `lib/prompts.ts` | v1.2: regulatory context section injected before extracted data; CBN-citation instruction added |
+| `app/api/verify/route.ts` | Stage 2.5: RAG retrieval between deterministic checks and reasoning; `regulatory_context` in final payload |
+| `components/VerificationResult.tsx` | Collapsible "Regulatory basis" panel (indigo, with BookOpen icon) below AI reasoning |
+| `tests/rag-eval.mjs` (new) | 15 retrieval test cases; `npm run eval:rag` |
+
+### Architecture rationale
+
+Python/Chroma was ruled out (incompatible with Vercel serverless). The TF-IDF approach:
+- **Zero external dependencies** — pure TypeScript, no npm installs
+- **~1ms init time** — IDF computed once at module load, reused across requests
+- **Deterministic** — same query always returns the same chunks (important for audit)
+- **Portable** — trivially swappable for dense embeddings (Voyage AI / all-MiniLM-L6-v2) with a Chroma/Qdrant backend when the product scales
+
+---
 
 ---
 

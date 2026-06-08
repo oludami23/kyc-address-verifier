@@ -1,5 +1,5 @@
 // All Claude prompts live here so they're easy to tune without touching API logic.
-// v1.1 — 2026-06-08
+// v1.2 — 2026-06-08 (Phase C: regulatory context injected into reasoning prompt)
 // Changes: expanded title-stripping, expiry/format anomaly instructions, CBN citation in verdict,
 //          Nigerian naming guidance, multi-failure triage order.
 // See /prompts/CHANGELOG.md for full rationale.
@@ -71,12 +71,31 @@ modified, incomplete address, no address field, issue date in the future, date o
 
 Return ONLY the JSON object, no preamble.`;
 
+// Minimal type for the RAG context injected here. Mirrors RetrievalResult from lib/rag.ts
+// but avoids a circular import chain by using a local structural type.
+interface RagChunkRef {
+  chunk: { source: string; section: string; text: string };
+  relevance_summary: string;
+}
+
 // Template — call buildReasoningPrompt() to get the final prompt string.
 export function buildReasoningPrompt(
   extractedData: object,
   checks: object,
-  decision: string
+  decision: string,
+  regulatoryContext?: RagChunkRef[]
 ): string {
+  // Build the optional regulatory context section injected between instructions and data
+  const ragSection =
+    regulatoryContext && regulatoryContext.length > 0
+      ? `\nRelevant regulatory context (use these to ground your reasoning in specific CBN/NIMC rules):\n${regulatoryContext
+          .map(
+            (r, i) =>
+              `[${i + 1}] ${r.chunk.source}\n    Section: ${r.chunk.section}\n    Relevant because: ${r.relevance_summary}\n    Excerpt: "${r.chunk.text.slice(0, 280)}…"`
+          )
+          .join("\n\n")}\n`
+      : "";
+
   return `You are a senior KYC compliance analyst writing a brief verdict for a Nigerian fintech onboarding officer.
 Your verdicts are used directly in the compliance audit trail — be precise, cite evidence, and name regulations.
 
@@ -90,13 +109,14 @@ REASONING RULES:
 - If authenticity failed: name the specific anomalies (LOW confidence, specific anomaly text)
 - If ID expiry failed: state the exact expiry date and confirm the document is invalid for KYC
 - If multiple checks failed: lead with the most critical failure (identity fraud signals first, then recency, then legibility)
+- When regulatory context is provided, quote the specific rule (e.g. "CBN AML/CFT Regulations 2022, Regulation 14") — do not just say "regulations require"
 - Do not speculate beyond the evidence in the extracted data and check results
 
 RECOMMENDED ACTION RULES:
 - VERIFIED: approve onboarding, name the customer and document reference
 - REVIEW_REQUIRED: name the specific issue that needs human review; be actionable
 - REJECTED: state what the applicant must resubmit and why
-
+${ragSection}
 Extracted data:
 ${JSON.stringify(extractedData, null, 2)}
 

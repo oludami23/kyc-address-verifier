@@ -1,6 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { ID_EXTRACTION_PROMPT, POA_EXTRACTION_PROMPT, buildReasoningPrompt } from "./prompts";
 import type { IDExtraction, PoAExtraction, Check, Decision } from "./types";
+import type { RetrievalResult } from "./rag";
 
 const client = new Anthropic();
 
@@ -182,12 +183,14 @@ export async function generateReasoning(
   idExtraction: IDExtraction,
   poaExtraction: PoAExtraction,
   checks: Check[],
-  decision: Decision
+  decision: Decision,
+  regulatoryContext?: RetrievalResult[]   // Phase C: RAG citations injected into prompt
 ): Promise<{ result: { reasoning: string; recommended_action: string }; cost: CallCost }> {
   const prompt = buildReasoningPrompt(
     { id_document: idExtraction, proof_of_address: poaExtraction },
     checks,
-    decision
+    decision,
+    regulatoryContext
   );
 
   const response = await client.messages.create({

@@ -25,6 +25,13 @@ export interface Check {
   detail: string;
 }
 
+// Phase C: regulatory citation surfaced alongside the AI verdict
+export interface RegulationRef {
+  source: string;      // e.g. "CBN AML/CFT Regulations 2022 — Regulation 14"
+  section: string;     // e.g. "Proof-of-Address: Recency Requirement"
+  relevance: string;   // 1-sentence reason this chunk was retrieved
+}
+
 export interface VerificationResult {
   decision: Decision;
   confidence: number;
@@ -33,6 +40,7 @@ export interface VerificationResult {
   checks: Check[];
   reasoning: string;
   recommended_action: string;
+  regulatory_context?: RegulationRef[];  // Phase C: top-K compliance citations
 }
 
 // Internal extraction types — richer than what we expose to the client

@@ -2,8 +2,10 @@ import Anthropic from "@anthropic-ai/sdk";
 import { NextRequest, NextResponse } from "next/server";
 import { runChecks, aggregateDecision } from "@/lib/verification";
 import { extractIDDocument, extractProofOfAddress, generateReasoning } from "@/lib/anthropic";
+import { buildRetrievalQuery, retrieveCompliance } from "@/lib/rag";
+import type { RetrievalResult } from "@/lib/rag";
 import type { CallCost } from "@/lib/anthropic";
-import type { IDExtraction, PoAExtraction, VerificationResult } from "@/lib/types";
+import type { IDExtraction, PoAExtraction, VerificationResult, RegulationRef } from "@/lib/types";
 
 // ---------------------------------------------------------------------------
 // POST /api/verify — Server-Sent Events stream
@@ -220,7 +222,29 @@ export async function POST(request: NextRequest) {
           poaExtraction.extraction_confidence
         );
 
-        // Stage 3: Reasoning
+        // Stage 2.5: RAG compliance retrieval (synchronous, in-memory — ~0ms)
+        // Builds a query from the verification context and retrieves the top-4
+        // compliance chunks most relevant to this case. No external calls.
+        const ragQuery = buildRetrievalQuery(
+          idExtraction.type,
+          poaExtraction.type,
+          checks,
+          decision
+        );
+        const retrievedChunks: RetrievalResult[] = retrieveCompliance(ragQuery, 4);
+
+        // Map retrieval results into the client-facing RegulationRef shape
+        const regulatory_context: RegulationRef[] = retrievedChunks.map((r) => ({
+          source: r.chunk.source,
+          section: r.chunk.section,
+          relevance: r.relevance_summary,
+        }));
+
+        console.log(
+          `[KYC] RAG retrieval — query: "${ragQuery.slice(0, 80)}…"  chunks: ${retrievedChunks.length}`
+        );
+
+        // Stage 3: Reasoning (RAG context passed to prompt builder)
         send({ stage: "reasoning" });
         let reasoning = "Automated checks completed. See individual check results for details.";
         let recommended_action =
@@ -231,7 +255,8 @@ export async function POST(request: NextRequest) {
             idExtraction,
             poaExtraction,
             checks,
-            decision
+            decision,
+            retrievedChunks        // Phase C: RAG context injected into verdict prompt
           );
           reasoning = reasonOut.reasoning;
           recommended_action = reasonOut.recommended_action;
@@ -259,7 +284,16 @@ export async function POST(request: NextRequest) {
 
         send({
           done: true,
-          result: { decision, confidence, id_document, proof_of_address, checks, reasoning, recommended_action } satisfies VerificationResult,
+          result: {
+            decision,
+            confidence,
+            id_document,
+            proof_of_address,
+            checks,
+            reasoning,
+            recommended_action,
+            regulatory_context,    // Phase C: compliance citations surfaced in UI
+          } satisfies VerificationResult,
         });
       } catch (err) {
         console.error("[KYC] Pipeline error:", err);

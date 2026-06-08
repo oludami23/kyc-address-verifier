@@ -8,6 +8,7 @@ import {
   ChevronDown,
   ChevronUp,
   RotateCcw,
+  BookOpen,
 } from "lucide-react";
 import { CheckBadge } from "@/components/CheckBadge";
 import type { VerificationResult as VResult } from "@/lib/types";
@@ -43,7 +44,9 @@ const DECISION_CONFIG = {
 
 export function VerificationResult({ result, onReset }: Props) {
   const [showExtracted, setShowExtracted] = useState(false);
+  const [showRegulatory, setShowRegulatory] = useState(false);
   const { Icon, textColor, bg, border, label } = DECISION_CONFIG[result.decision];
+  const hasRegulatory = result.regulatory_context && result.regulatory_context.length > 0;
 
   return (
     <div className="bg-white rounded-2xl border border-gray-200 p-8 shadow-sm space-y-7">
@@ -65,6 +68,46 @@ export function VerificationResult({ result, onReset }: Props) {
         </p>
         <p className="text-gray-700 leading-relaxed">{result.reasoning}</p>
       </div>
+
+      {/* Regulatory Context (Phase C — collapsible) */}
+      {hasRegulatory && (
+        <div className="border border-indigo-200 rounded-xl overflow-hidden">
+          <button
+            onClick={() => setShowRegulatory((v) => !v)}
+            className="w-full flex items-center justify-between px-5 py-3.5 bg-indigo-50 hover:bg-indigo-100 text-sm font-medium text-indigo-700 transition-colors"
+          >
+            <span className="flex items-center gap-2">
+              <BookOpen className="w-4 h-4" />
+              Regulatory basis
+              <span className="text-xs font-normal text-indigo-400">
+                ({result.regulatory_context!.length} citations)
+              </span>
+            </span>
+            {showRegulatory ? (
+              <ChevronUp className="w-4 h-4 text-indigo-400" />
+            ) : (
+              <ChevronDown className="w-4 h-4 text-indigo-400" />
+            )}
+          </button>
+
+          {showRegulatory && (
+            <div className="bg-white divide-y divide-gray-100">
+              {result.regulatory_context!.map((ref, i) => (
+                <div key={i} className="px-5 py-4 space-y-1">
+                  <p className="text-xs font-semibold text-indigo-600 uppercase tracking-wider">
+                    {ref.section}
+                  </p>
+                  <p className="text-xs text-gray-500 leading-relaxed">{ref.source}</p>
+                  <p className="text-sm text-gray-700 leading-relaxed">
+                    <span className="font-medium text-gray-500">Why retrieved: </span>
+                    {ref.relevance}
+                  </p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Recommended action callout */}
       <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
