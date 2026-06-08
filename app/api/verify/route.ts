@@ -39,7 +39,7 @@ const MOCK_EXTRACTIONS: Record<string, { id: IDExtraction; poa: PoAExtraction }>
       issuer: "IKEDC",
       name_on_document: "O. A. ADEYEMI",
       address: "14 Adeola Odeku Street, Victoria Island, Lagos",
-      issue_date: "2026-02-14",
+      issue_date: "2026-04-20",
       account_number_last4: "4821",
       extraction_confidence: "HIGH",
       anomalies: [],
