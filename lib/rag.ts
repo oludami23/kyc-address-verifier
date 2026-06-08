@@ -262,6 +262,8 @@ export function buildRetrievalQuery(
     parts.push("document authenticity fraud anomaly manual review");
   if (checkMap["ID document expiry"] === "FAIL") parts.push("expired identity document KYC compliance");
   if (checkMap["ID number format"] === "FAIL") parts.push("NIN format invalid identity number");
+  if (checkMap["Address cross-match"] === "WARN")
+    parts.push("address inconsistency cross-match different state customer due diligence verify");
 
   // Verdict-level context
   if (decision === "VERIFIED") parts.push("tier 3 full KYC verified onboarding");

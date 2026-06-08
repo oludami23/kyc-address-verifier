@@ -30,7 +30,8 @@
       "document_recency": "PASS",
       "authenticity": "PASS",
       "id_expiry": "PASS",
-      "id_number_format": "PASS"
+      "id_number_format": "PASS",
+      "address_cross_match": "PASS"
     },
     "notes": "Baseline clean case — all signals green"
   },
@@ -65,7 +66,8 @@
       "document_recency": "PASS",
       "authenticity": "PASS",
       "id_expiry": "PASS",
-      "id_number_format": "PASS"
+      "id_number_format": "PASS",
+      "address_cross_match": "PASS"
     },
     "notes": "Prefix matching handles 'O.' abbreviation of 'Ogundimu' — ogundimu starts with o"
   },
@@ -100,7 +102,8 @@
       "document_recency": "PASS",
       "authenticity": "PASS",
       "id_expiry": "PASS",
-      "id_number_format": "PASS"
+      "id_number_format": "PASS",
+      "address_cross_match": "PASS"
     },
     "notes": "Bank statement with 6-word address — wordCount threshold passes even with only 2 commas"
   },
@@ -135,7 +138,8 @@
       "document_recency": "PASS",
       "authenticity": "PASS",
       "id_expiry": "PASS",
-      "id_number_format": "PASS"
+      "id_number_format": "PASS",
+      "address_cross_match": "PASS"
     },
     "notes": "Token-set overlap is order-independent — all 3 tokens present in both regardless of order"
   },
@@ -170,7 +174,8 @@
       "document_recency": "PASS",
       "authenticity": "PASS",
       "id_expiry": "PASS",
-      "id_number_format": "PASS"
+      "id_number_format": "PASS",
+      "address_cross_match": "PASS"
     },
     "notes": "Abdullahi abbreviated to A. — prefix match works: 'abdullahi'.startsWith('a') = true"
   },
@@ -205,7 +210,8 @@
       "document_recency": "WARN",
       "authenticity": "PASS",
       "id_expiry": "PASS",
-      "id_number_format": "PASS"
+      "id_number_format": "PASS",
+      "address_cross_match": "PASS"
     },
     "notes": "2026-03-05 is ~95 days before 2026-06-08 — WARN range triggers REVIEW_REQUIRED"
   },
@@ -240,7 +246,8 @@
       "document_recency": "PASS",
       "authenticity": "PASS",
       "id_expiry": "PASS",
-      "id_number_format": "PASS"
+      "id_number_format": "PASS",
+      "address_cross_match": "PASS"
     },
     "notes": "Address has 0 commas and only 2 words — WARN threshold, not enough to auto-reject"
   },
@@ -275,7 +282,8 @@
       "document_recency": "PASS",
       "authenticity": "PASS",
       "id_expiry": "PASS",
-      "id_number_format": "PASS"
+      "id_number_format": "PASS",
+      "address_cross_match": "PASS"
     },
     "notes": "KNOWN SYSTEM LIMITATION: 2/3 token overlap (0.667) triggers FAIL not WARN — system rejects what a human would flag for review. Name match threshold may be too strict for missing-middle-name cases."
   },
@@ -310,7 +318,8 @@
       "document_recency": "PASS",
       "authenticity": "PASS",
       "id_expiry": "PASS",
-      "id_number_format": "PASS"
+      "id_number_format": "PASS",
+      "address_cross_match": "PASS"
     },
     "notes": "Abbreviated address (no commas, 3 words) — legibility WARN is correct. System does not cross-check address content between ID and PoA (documented gap)."
   },
@@ -345,7 +354,8 @@
       "document_recency": "PASS",
       "authenticity": "WARN",
       "id_expiry": "PASS",
-      "id_number_format": "PASS"
+      "id_number_format": "PASS",
+      "address_cross_match": "PASS"
     },
     "notes": "One HIGH + one MEDIUM confidence (not both HIGH) → authenticity WARN → REVIEW_REQUIRED"
   },
@@ -380,7 +390,8 @@
       "document_recency": "PASS",
       "authenticity": "PASS",
       "id_expiry": "PASS",
-      "id_number_format": "PASS"
+      "id_number_format": "PASS",
+      "address_cross_match": "PASS"
     },
     "notes": "Zero token overlap between unrelated names — unambiguous FAIL"
   },
@@ -415,7 +426,8 @@
       "document_recency": "PASS",
       "authenticity": "PASS",
       "id_expiry": "FAIL",
-      "id_number_format": "PASS"
+      "id_number_format": "PASS",
+      "address_cross_match": "PASS"
     },
     "notes": "KNOWN SYSTEM GAP: expiry_date field is extracted but never checked. System returns VERIFIED on an expired ID. Requires a new checkIDExpiry() function."
   },
@@ -450,7 +462,8 @@
       "document_recency": "FAIL",
       "authenticity": "PASS",
       "id_expiry": "PASS",
-      "id_number_format": "PASS"
+      "id_number_format": "PASS",
+      "address_cross_match": "PASS"
     },
     "notes": "2025-11-01 is ~219 days before 2026-06-08 — hard FAIL, no ambiguity"
   },
@@ -485,7 +498,8 @@
       "document_recency": "PASS",
       "authenticity": "PASS",
       "id_expiry": "PASS",
-      "id_number_format": "PASS"
+      "id_number_format": "PASS",
+      "address_cross_match": "PASS"
     },
     "notes": "1/2 token overlap (0.5) — surname shared but given name is different person entirely"
   },
@@ -520,7 +534,8 @@
       "document_recency": "PASS",
       "authenticity": "PASS",
       "id_expiry": "PASS",
-      "id_number_format": "FAIL"
+      "id_number_format": "FAIL",
+      "address_cross_match": "PASS"
     },
     "notes": "KNOWN SYSTEM GAP: id_number is stored but never validated against NIN/DL format rules. System returns VERIFIED despite garbage ID number."
   },
@@ -555,7 +570,8 @@
       "document_recency": "PASS",
       "authenticity": "PASS",
       "id_expiry": "PASS",
-      "id_number_format": "PASS"
+      "id_number_format": "PASS",
+      "address_cross_match": "PASS"
     },
     "notes": "Single-token names: 1/1 = 1.0 overlap → PASS. System handles this correctly."
   },
@@ -590,7 +606,8 @@
       "document_recency": "PASS",
       "authenticity": "PASS",
       "id_expiry": "PASS",
-      "id_number_format": "PASS"
+      "id_number_format": "PASS",
+      "address_cross_match": "PASS"
     },
     "notes": "v1.1 FIX: Hyphen normalisation in normalizeName() now splits Obi-Nwosu into [obi, nwosu] before stripping non-alpha chars. Both ID tokens [adaeze, obi, nwosu] match PoA tokens [adaeze, obi, nwosu] → 3/3 = 1.0 → PASS → VERIFIED. Previously REJECTED in v1.0."
   },
@@ -625,7 +642,8 @@
       "document_recency": "PASS",
       "authenticity": "PASS",
       "id_expiry": "PASS",
-      "id_number_format": "PASS"
+      "id_number_format": "PASS",
+      "address_cross_match": "PASS"
     },
     "notes": "Issuer field is extracted but not checked — uncommon providers do not affect verdict. This is by design."
   },
@@ -660,7 +678,8 @@
       "document_recency": "PASS",
       "authenticity": "PASS",
       "id_expiry": "PASS",
-      "id_number_format": "PASS"
+      "id_number_format": "PASS",
+      "address_cross_match": "PASS"
     },
     "notes": "Null address → FAIL → REJECTED. Common with online bank statements that omit the address block."
   },
@@ -695,7 +714,8 @@
       "document_recency": "PASS",
       "authenticity": "PASS",
       "id_expiry": "PASS",
-      "id_number_format": "PASS"
+      "id_number_format": "PASS",
+      "address_cross_match": "WARN"
     },
     "notes": "KNOWN SYSTEM GAP: No address cross-check between ID and PoA. System returns VERIFIED even though ID shows Lagos and PoA shows Port Harcourt. Requires a new checkAddressCrossMatch() function."
   },
@@ -732,7 +752,8 @@
       "document_recency": "PASS",
       "authenticity": "WARN",
       "id_expiry": "PASS",
-      "id_number_format": "PASS"
+      "id_number_format": "PASS",
+      "address_cross_match": "PASS"
     },
     "notes": "KNOWN SYSTEM LIMITATION: 'Hajiya' is NOT in the title normalization list (only mr/mrs/ms/dr/prof/chief/alhaji/alhaja). Tokens become ['hajiya','zainab','danladi'] vs ['zainab','danladi'] → 2/3 = 0.667 → FAIL → REJECTED. The expected REVIEW_REQUIRED requires expanding the title strip list to include Hajiya, Mallam, Barrister, Engineer, etc."
   },
@@ -767,7 +788,8 @@
       "document_recency": "PASS",
       "authenticity": "PASS",
       "id_expiry": "PASS",
-      "id_number_format": "PASS"
+      "id_number_format": "PASS",
+      "address_cross_match": "PASS"
     },
     "notes": "'&' is stripped by normalization. ID tokens ['olumide','adeyinka'] are both present in PoA tokens — 2/2 = 1.0 PASS. System handles joint accounts correctly as long as the customer's name appears first."
   }

@@ -1,11 +1,13 @@
 /**
  * KYC Eval Runner — Phase 2 Hardening
- * v1.1 — mirrors lib/verification.ts v1.1 changes:
- *   - Expanded title list + hyphen normalisation in normalizeName
- *   - WARN threshold lowered 0.7 → 0.6 in checkNameMatch
- *   - New checkIDExpiry()
- *   - New checkIDNumberFormat()
- *   - runChecks() includes all 6 checks
+ * v1.2 — mirrors lib/verification.ts v1.2 + Phase D sub-module refactor:
+ *   - checkNameMatch / checkAddressLegibility / checkDocumentRecency moved to
+ *     lib/comparison/comparator.ts; logic unchanged
+ *   - checkAuthenticity / checkIDExpiry / checkIDNumberFormat moved to
+ *     lib/compliance/rules.ts; logic unchanged
+ *   - Nigeria-specific constants extracted to lib/config/nigeria.ts
+ *   - New checkAddressCrossMatch() — fixes TC-020 (Lagos vs Port Harcourt)
+ *   - runChecks() now returns 7 checks
  *
  * Usage:  node tests/eval-runner.mjs
  */
@@ -122,6 +124,55 @@ function checkIDNumberFormat(idNumber, docType) {
   return { name: "ID number format", status: "PASS", detail: `ID number present: '${idNumber}' — format check not applicable for ${docType}` };
 }
 
+// v1.2: new — mirrors lib/config/nigeria.ts location lists
+const NIGERIAN_STATES = [
+  "abia", "adamawa", "akwa ibom", "anambra", "bauchi", "bayelsa", "benue",
+  "borno", "cross river", "delta", "ebonyi", "edo", "ekiti", "enugu",
+  "fct", "abuja", "gombe", "imo", "jigawa", "kaduna", "kano", "katsina",
+  "kebbi", "kogi", "kwara", "lagos", "nasarawa", "niger", "ogun", "ondo",
+  "osun", "oyo", "plateau", "rivers", "sokoto", "taraba", "yobe", "zamfara",
+];
+const NIGERIAN_CITIES = [
+  "lagos", "abuja", "kano", "ibadan", "port harcourt", "benin city",
+  "maiduguri", "zaria", "aba", "jos", "ilorin", "oyo", "enugu",
+  "abeokuta", "onitsha", "warri", "sokoto", "calabar", "uyo", "kaduna",
+  "owerri", "asaba", "ikeja", "surulere", "victoria island", "lekki",
+  "ikoyi", "yaba", "apapa", "agege", "maitama", "garki", "wuse",
+  "gwarinpa", "asokoro", "new gra", "old gra", "trans amadi",
+  "benin", "sapele", "effurun",
+];
+
+function extractLocationTokens(address) {
+  const lower = address.toLowerCase();
+  const found = new Set();
+  for (const s of NIGERIAN_STATES) if (lower.includes(s)) found.add(s);
+  for (const c of NIGERIAN_CITIES) if (lower.includes(c)) found.add(c);
+  return [...found];
+}
+
+// v1.2: new check — fixes TC-020
+function checkAddressCrossMatch(idAddress, poaAddress) {
+  if (!idAddress) {
+    return { name: "Address cross-match", status: "PASS", detail: "No address on identity document — cross-check not applicable" };
+  }
+  if (!poaAddress) {
+    return { name: "Address cross-match", status: "PASS", detail: "No address on proof-of-address — already flagged by legibility check" };
+  }
+  const idTokens = extractLocationTokens(idAddress);
+  const poaTokens = extractLocationTokens(poaAddress);
+  if (idTokens.length === 0 || poaTokens.length === 0) {
+    return { name: "Address cross-match", status: "PASS", detail: "Address cross-check inconclusive — no recognisable location tokens found" };
+  }
+  const shared = idTokens.filter(t => poaTokens.includes(t));
+  if (shared.length > 0) {
+    return { name: "Address cross-match", status: "PASS", detail: `Addresses share location token(s) [${shared.join(", ")}] — cross-check passed` };
+  }
+  return {
+    name: "Address cross-match", status: "WARN",
+    detail: `Address locations inconsistent — ID suggests [${idTokens.join(", ")}], PoA suggests [${poaTokens.join(", ")}]. Manual review recommended.`
+  };
+}
+
 function aggregateDecision(checks, idConfidence, poaConfidence) {
   const hasFail = checks.some((c) => c.status === "FAIL");
   const hasWarn = checks.some((c) => c.status === "WARN");
@@ -140,6 +191,7 @@ function runChecks(id, poa) {
     checkAuthenticity(id, poa),
     checkIDExpiry(id.expiry_date),
     checkIDNumberFormat(id.id_number, id.type),
+    checkAddressCrossMatch(id.address_on_id, poa.address), // v1.2: new
   ];
 }
 
@@ -152,6 +204,7 @@ const CHECK_KEYS = {
   "Document authenticity signals": "authenticity",
   "ID document expiry": "id_expiry",
   "ID number format": "id_number_format",
+  "Address cross-match": "address_cross_match",  // v1.2: new
 };
 
 // ─── Runner ───────────────────────────────────────────────────────────────────
@@ -206,7 +259,7 @@ const totalCases = results.length;
 const verdictMatches = results.filter((r) => r.verdict_match).length;
 const verdictAccuracy = ((verdictMatches / totalCases) * 100).toFixed(1);
 
-const checkNames = ["name_match", "address_legibility", "document_recency", "authenticity", "id_expiry", "id_number_format"];
+const checkNames = ["name_match", "address_legibility", "document_recency", "authenticity", "id_expiry", "id_number_format", "address_cross_match"];
 const checkAccuracy = {};
 for (const key of checkNames) {
   const matching = results.filter((r) => {
@@ -218,7 +271,7 @@ for (const key of checkNames) {
   checkAccuracy[key] = { matching, total: totalCases, pct: ((matching / totalCases) * 100).toFixed(1) };
 }
 
-console.log("\n=== KYC Eval Report (v1.1) ===");
+console.log("\n=== KYC Eval Report (v1.2) ===");
 console.log(`Run date: ${new Date().toISOString().split("T")[0]}`);
 console.log(`Total cases: ${totalCases}`);
 console.log(`\nVerdict accuracy:          ${verdictMatches}/${totalCases} (${verdictAccuracy}%)`);
@@ -228,6 +281,7 @@ console.log(`Recency check accuracy:    ${checkAccuracy.document_recency.matchin
 console.log(`Authenticity accuracy:     ${checkAccuracy.authenticity.matching}/${totalCases} (${checkAccuracy.authenticity.pct}%)`);
 console.log(`ID expiry accuracy:        ${checkAccuracy.id_expiry.matching}/${totalCases} (${checkAccuracy.id_expiry.pct}%)`);
 console.log(`ID number format accuracy: ${checkAccuracy.id_number_format.matching}/${totalCases} (${checkAccuracy.id_number_format.pct}%)`);
+console.log(`Address cross-match acc:   ${checkAccuracy.address_cross_match.matching}/${totalCases} (${checkAccuracy.address_cross_match.pct}%)`);
 
 const failures = results.filter((r) => !r.verdict_match || r.check_mismatches.length > 0);
 
@@ -257,4 +311,4 @@ for (const cat of categories) {
 
 console.log("\n=== End of Report ===\n");
 
-export { results, checkAccuracy, verdictMatches, totalCases };
+export { results, checkAccuracy, verdictMatches, totalCases, checkAddressCrossMatch };

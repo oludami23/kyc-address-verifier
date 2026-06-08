@@ -2,7 +2,53 @@
 
 **Eval harness:** `tests/eval-runner.mjs` | **RAG eval:** `tests/rag-eval.mjs`  
 **Test cases:** `tests/eval-cases.json`  
-**Latest run:** 2026-06-08 (Phase C)
+**Latest run:** 2026-06-08 (Phase D)
+
+---
+
+## Phase D — Architectural Restructuring
+
+**Run date:** 2026-06-08
+
+### Verdict accuracy after Phase D
+
+| Metric | Phase C | Phase D | Δ |
+|---|---|---|---|
+| **Verdict accuracy** | 21/22 (95.5%) | **22/22 (100.0%)** | **+4.5pp** |
+| Address cross-match accuracy | n/a | 22/22 (100.0%) | new |
+
+### TC-020 fix — `checkAddressCrossMatch()`
+
+The one remaining gap from all previous phases is now closed.
+
+**Root cause:** `runChecks()` checked the PoA address for legibility but never compared it to the address field on the identity document. When both documents belong to the same person but show Lagos (ID) and Port Harcourt (PoA), the system returned VERIFIED.
+
+**Fix:** New `checkAddressCrossMatch(idAddress, poaAddress)` in `lib/comparison/comparator.ts`:
+- Returns PASS if `idAddress` is null (NIN slips omit address field — benefit of the doubt)
+- Extracts Nigerian state/city tokens from both addresses using `NIGERIAN_STATES` + `NIGERIAN_CITIES` from `lib/config/nigeria.ts`
+- Returns PASS if shared location tokens are found (same city/state)
+- Returns WARN (not FAIL) if no shared tokens — triggers REVIEW_REQUIRED; human judgment needed because the person may have moved
+
+TC-020: "Lagos/Ikoyi" vs "Rivers/Port Harcourt/New GRA" → 0 shared tokens → WARN → REVIEW_REQUIRED ✓
+
+### Architectural changes (D1–D3)
+
+**New sub-module structure:**
+
+| Module | Responsibility |
+|---|---|
+| `lib/config/nigeria.ts` (new) | Single source of truth for all Nigeria-specific constants: titles, providers, CBN recency windows, NIN/DL format regexes, ID expiry threshold, 37 states, 40+ cities |
+| `lib/comparison/similarity.ts` (new) | `normalizeName`, `tokenOverlap`, `extractLocationTokens` — pure functions, no side effects |
+| `lib/comparison/comparator.ts` (new) | `checkNameMatch`, `checkAddressLegibility`, `checkDocumentRecency`, `checkAddressCrossMatch` |
+| `lib/compliance/rules.ts` (new) | `checkAuthenticity`, `checkIDExpiry`, `checkIDNumberFormat` |
+| `lib/compliance/rag.ts` (new) | Re-export facade for `lib/rag.ts` under the compliance/ namespace |
+| `lib/verification.ts` (updated) | Now a thin orchestrator (30 lines): imports from comparison/ + compliance/, exports `runChecks` + `aggregateDecision` |
+
+**Public API unchanged.** `app/api/verify/route.ts` imports only from `lib/verification.ts` — zero changes to the route required.
+
+**Extensibility achieved:** Swapping `lib/config/nigeria.ts` for another country's config is the only change needed to adapt to a new jurisdiction. See `docs/architecture.md` for the full extension guide.
+
+---
 
 ---
 
