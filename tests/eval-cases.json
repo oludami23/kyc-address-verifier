@@ -1,0 +1,728 @@
+[
+  {
+    "id": "TC-001",
+    "description": "Clean match — NIN slip and IKEDC bill, exact same name, recent bill, both HIGH confidence",
+    "category": "clean_match",
+    "id_extraction": {
+      "type": "NIN",
+      "name": "Adewale Ogundimu Johnson",
+      "id_number": "12345678901",
+      "date_of_birth": "1990-03-14",
+      "address_on_id": "12 Allen Avenue, Ikeja, Lagos",
+      "expiry_date": null,
+      "extraction_confidence": "HIGH",
+      "anomalies": []
+    },
+    "poa_extraction": {
+      "type": "UTILITY_BILL",
+      "issuer": "IKEDC",
+      "name_on_document": "Adewale Ogundimu Johnson",
+      "address": "12 Allen Avenue, Ikeja, Lagos",
+      "issue_date": "2026-04-15",
+      "account_number_last4": "0042",
+      "extraction_confidence": "HIGH",
+      "anomalies": []
+    },
+    "expected_verdict": "VERIFIED",
+    "expected_checks": {
+      "name_match": "PASS",
+      "address_legibility": "PASS",
+      "document_recency": "PASS",
+      "authenticity": "PASS"
+    },
+    "notes": "Baseline clean case — all signals green"
+  },
+  {
+    "id": "TC-002",
+    "description": "Abbreviated middle name on utility bill (O. instead of Ogundimu)",
+    "category": "clean_match",
+    "id_extraction": {
+      "type": "NIN",
+      "name": "Adewale Ogundimu Johnson",
+      "id_number": "98765432100",
+      "date_of_birth": "1985-07-22",
+      "address_on_id": null,
+      "expiry_date": null,
+      "extraction_confidence": "HIGH",
+      "anomalies": []
+    },
+    "poa_extraction": {
+      "type": "UTILITY_BILL",
+      "issuer": "EKEDC",
+      "name_on_document": "Adewale O. Johnson",
+      "address": "Flat 3, Block B, Lekki Phase 1, Lagos",
+      "issue_date": "2026-04-20",
+      "account_number_last4": "7731",
+      "extraction_confidence": "HIGH",
+      "anomalies": []
+    },
+    "expected_verdict": "VERIFIED",
+    "expected_checks": {
+      "name_match": "PASS",
+      "address_legibility": "PASS",
+      "document_recency": "PASS",
+      "authenticity": "PASS"
+    },
+    "notes": "Prefix matching handles 'O.' abbreviation of 'Ogundimu' — ogundimu starts with o"
+  },
+  {
+    "id": "TC-003",
+    "description": "Different document formats — driver's licence and bank statement, exact name match",
+    "category": "clean_match",
+    "id_extraction": {
+      "type": "DRIVERS_LICENSE",
+      "name": "Chidinma Nwosu",
+      "id_number": "AAD23456FG",
+      "date_of_birth": "1992-11-05",
+      "address_on_id": "22 Opebi Road, Ikeja, Lagos",
+      "expiry_date": "2028-11-05",
+      "extraction_confidence": "HIGH",
+      "anomalies": []
+    },
+    "poa_extraction": {
+      "type": "BANK_STATEMENT",
+      "issuer": "First Bank Nigeria",
+      "name_on_document": "Chidinma Nwosu",
+      "address": "22 Opebi Road, Ikeja, Lagos State",
+      "issue_date": "2026-03-25",
+      "account_number_last4": "2209",
+      "extraction_confidence": "HIGH",
+      "anomalies": []
+    },
+    "expected_verdict": "VERIFIED",
+    "expected_checks": {
+      "name_match": "PASS",
+      "address_legibility": "PASS",
+      "document_recency": "PASS",
+      "authenticity": "PASS"
+    },
+    "notes": "Bank statement with 6-word address — wordCount threshold passes even with only 2 commas"
+  },
+  {
+    "id": "TC-004",
+    "description": "Name token ordering differs — surname-first on ID, firstname-first on bill",
+    "category": "clean_match",
+    "id_extraction": {
+      "type": "NIN",
+      "name": "Eze Ifeanyi Charles",
+      "id_number": "55544433322",
+      "date_of_birth": "1988-06-15",
+      "address_on_id": "Plot 15, Maitama, Abuja",
+      "expiry_date": null,
+      "extraction_confidence": "HIGH",
+      "anomalies": []
+    },
+    "poa_extraction": {
+      "type": "UTILITY_BILL",
+      "issuer": "AEDC",
+      "name_on_document": "Ifeanyi Charles Eze",
+      "address": "Plot 15, Maitama, Abuja, FCT",
+      "issue_date": "2026-05-10",
+      "account_number_last4": null,
+      "extraction_confidence": "HIGH",
+      "anomalies": []
+    },
+    "expected_verdict": "VERIFIED",
+    "expected_checks": {
+      "name_match": "PASS",
+      "address_legibility": "PASS",
+      "document_recency": "PASS",
+      "authenticity": "PASS"
+    },
+    "notes": "Token-set overlap is order-independent — all 3 tokens present in both regardless of order"
+  },
+  {
+    "id": "TC-005",
+    "description": "Title on ID (Alhaji), abbreviated first middle on bill, slight address formatting difference",
+    "category": "clean_match",
+    "id_extraction": {
+      "type": "NIN",
+      "name": "Fatima Abdullahi Musa",
+      "id_number": "11122233344",
+      "date_of_birth": "1975-01-30",
+      "address_on_id": "House 7, Garki Area 11, Abuja",
+      "expiry_date": null,
+      "extraction_confidence": "HIGH",
+      "anomalies": []
+    },
+    "poa_extraction": {
+      "type": "UTILITY_BILL",
+      "issuer": "AEDC",
+      "name_on_document": "Fatima A. Musa",
+      "address": "House 7, Garki Area 11, Abuja",
+      "issue_date": "2026-04-28",
+      "account_number_last4": "5519",
+      "extraction_confidence": "HIGH",
+      "anomalies": []
+    },
+    "expected_verdict": "VERIFIED",
+    "expected_checks": {
+      "name_match": "PASS",
+      "address_legibility": "PASS",
+      "document_recency": "PASS",
+      "authenticity": "PASS"
+    },
+    "notes": "Abdullahi abbreviated to A. — prefix match works: 'abdullahi'.startsWith('a') = true"
+  },
+  {
+    "id": "TC-006",
+    "description": "Name matches but utility bill is 95 days old — borderline recency (just over 90-day window)",
+    "category": "partial_match",
+    "id_extraction": {
+      "type": "NIN",
+      "name": "Emeka Okafor",
+      "id_number": "66677788899",
+      "date_of_birth": "1993-04-20",
+      "address_on_id": null,
+      "expiry_date": null,
+      "extraction_confidence": "HIGH",
+      "anomalies": []
+    },
+    "poa_extraction": {
+      "type": "UTILITY_BILL",
+      "issuer": "PHCN",
+      "name_on_document": "Emeka Okafor",
+      "address": "45 Herbert Macaulay Street, Yaba, Lagos",
+      "issue_date": "2026-03-05",
+      "account_number_last4": "8812",
+      "extraction_confidence": "HIGH",
+      "anomalies": []
+    },
+    "expected_verdict": "REVIEW_REQUIRED",
+    "expected_checks": {
+      "name_match": "PASS",
+      "address_legibility": "PASS",
+      "document_recency": "WARN",
+      "authenticity": "PASS"
+    },
+    "notes": "2026-03-05 is ~95 days before 2026-06-08 — WARN range triggers REVIEW_REQUIRED"
+  },
+  {
+    "id": "TC-007",
+    "description": "Name matches but address on bill is too short to be legible (no commas, few words)",
+    "category": "partial_match",
+    "id_extraction": {
+      "type": "NIN",
+      "name": "Blessing Okeke",
+      "id_number": "44455566677",
+      "date_of_birth": "1996-08-11",
+      "address_on_id": "34 Agege Motor Road, Ikeja, Lagos",
+      "expiry_date": null,
+      "extraction_confidence": "HIGH",
+      "anomalies": []
+    },
+    "poa_extraction": {
+      "type": "UTILITY_BILL",
+      "issuer": "IKEDC",
+      "name_on_document": "Blessing Okeke",
+      "address": "Ikeja Lagos",
+      "issue_date": "2026-05-15",
+      "account_number_last4": "3301",
+      "extraction_confidence": "HIGH",
+      "anomalies": []
+    },
+    "expected_verdict": "REVIEW_REQUIRED",
+    "expected_checks": {
+      "name_match": "PASS",
+      "address_legibility": "WARN",
+      "document_recency": "PASS",
+      "authenticity": "PASS"
+    },
+    "notes": "Address has 0 commas and only 2 words — WARN threshold, not enough to auto-reject"
+  },
+  {
+    "id": "TC-008",
+    "description": "First and last name match but middle name is missing on utility bill",
+    "category": "partial_match",
+    "id_extraction": {
+      "type": "NIN",
+      "name": "Tunde Afolabi Balogun",
+      "id_number": "33344455566",
+      "date_of_birth": "1991-02-28",
+      "address_on_id": null,
+      "expiry_date": null,
+      "extraction_confidence": "HIGH",
+      "anomalies": []
+    },
+    "poa_extraction": {
+      "type": "UTILITY_BILL",
+      "issuer": "IKEDC",
+      "name_on_document": "Tunde Balogun",
+      "address": "10 Obafemi Awolowo Way, Ikoyi, Lagos",
+      "issue_date": "2026-05-02",
+      "account_number_last4": "4490",
+      "extraction_confidence": "HIGH",
+      "anomalies": []
+    },
+    "expected_verdict": "REVIEW_REQUIRED",
+    "expected_checks": {
+      "name_match": "WARN",
+      "address_legibility": "PASS",
+      "document_recency": "PASS",
+      "authenticity": "PASS"
+    },
+    "notes": "KNOWN SYSTEM LIMITATION: 2/3 token overlap (0.667) triggers FAIL not WARN — system rejects what a human would flag for review. Name match threshold may be too strict for missing-middle-name cases."
+  },
+  {
+    "id": "TC-009",
+    "description": "Address on bill is abbreviated (Ave instead of Avenue) — address legibility test",
+    "category": "partial_match",
+    "id_extraction": {
+      "type": "DRIVERS_LICENSE",
+      "name": "Kehinde Salami",
+      "id_number": "AAB99887GH",
+      "date_of_birth": "1987-12-03",
+      "address_on_id": "15 Allen Avenue, Ikeja, Lagos",
+      "expiry_date": "2027-12-03",
+      "extraction_confidence": "HIGH",
+      "anomalies": []
+    },
+    "poa_extraction": {
+      "type": "UTILITY_BILL",
+      "issuer": "IKEDC",
+      "name_on_document": "Kehinde Salami",
+      "address": "Allen Ave Ikeja",
+      "issue_date": "2026-04-25",
+      "account_number_last4": "6673",
+      "extraction_confidence": "HIGH",
+      "anomalies": []
+    },
+    "expected_verdict": "REVIEW_REQUIRED",
+    "expected_checks": {
+      "name_match": "PASS",
+      "address_legibility": "WARN",
+      "document_recency": "PASS",
+      "authenticity": "PASS"
+    },
+    "notes": "Abbreviated address (no commas, 3 words) — legibility WARN is correct. System does not cross-check address content between ID and PoA (documented gap)."
+  },
+  {
+    "id": "TC-010",
+    "description": "Valid documents but low image quality — ID extracted at MEDIUM confidence",
+    "category": "partial_match",
+    "id_extraction": {
+      "type": "NIN",
+      "name": "Ngozi Ibe",
+      "id_number": "22233344455",
+      "date_of_birth": "1994-09-17",
+      "address_on_id": null,
+      "expiry_date": null,
+      "extraction_confidence": "MEDIUM",
+      "anomalies": []
+    },
+    "poa_extraction": {
+      "type": "UTILITY_BILL",
+      "issuer": "ENUGU DISCO",
+      "name_on_document": "Ngozi Ibe",
+      "address": "7 Rumuola Road, Port Harcourt, Rivers State",
+      "issue_date": "2026-04-10",
+      "account_number_last4": "9982",
+      "extraction_confidence": "HIGH",
+      "anomalies": []
+    },
+    "expected_verdict": "REVIEW_REQUIRED",
+    "expected_checks": {
+      "name_match": "PASS",
+      "address_legibility": "PASS",
+      "document_recency": "PASS",
+      "authenticity": "WARN"
+    },
+    "notes": "One HIGH + one MEDIUM confidence (not both HIGH) → authenticity WARN → REVIEW_REQUIRED"
+  },
+  {
+    "id": "TC-011",
+    "description": "Completely different names on ID and utility bill — clear mismatch",
+    "category": "mismatch",
+    "id_extraction": {
+      "type": "NIN",
+      "name": "Chukwuemeka Obi",
+      "id_number": "77788899900",
+      "date_of_birth": "1989-05-14",
+      "address_on_id": null,
+      "expiry_date": null,
+      "extraction_confidence": "HIGH",
+      "anomalies": []
+    },
+    "poa_extraction": {
+      "type": "UTILITY_BILL",
+      "issuer": "PHEDC",
+      "name_on_document": "Rasheed Lawal",
+      "address": "18 Aba Road, Rumuola, Port Harcourt",
+      "issue_date": "2026-05-20",
+      "account_number_last4": "1144",
+      "extraction_confidence": "HIGH",
+      "anomalies": []
+    },
+    "expected_verdict": "REJECTED",
+    "expected_checks": {
+      "name_match": "FAIL",
+      "address_legibility": "PASS",
+      "document_recency": "PASS",
+      "authenticity": "PASS"
+    },
+    "notes": "Zero token overlap between unrelated names — unambiguous FAIL"
+  },
+  {
+    "id": "TC-012",
+    "description": "ID document has passed its expiry date — but current system does not check ID expiry",
+    "category": "mismatch",
+    "id_extraction": {
+      "type": "DRIVERS_LICENSE",
+      "name": "Babatunde Ojo",
+      "id_number": "AAC11223XY",
+      "date_of_birth": "1980-07-19",
+      "address_on_id": "22 Lagos-Ibadan Expressway, Berger, Ogun",
+      "expiry_date": "2024-01-15",
+      "extraction_confidence": "HIGH",
+      "anomalies": []
+    },
+    "poa_extraction": {
+      "type": "UTILITY_BILL",
+      "issuer": "IBEDC",
+      "name_on_document": "Babatunde Ojo",
+      "address": "22 Lagos-Ibadan Expressway, Berger, Ogun",
+      "issue_date": "2026-04-25",
+      "account_number_last4": "0076",
+      "extraction_confidence": "HIGH",
+      "anomalies": []
+    },
+    "expected_verdict": "REJECTED",
+    "expected_checks": {
+      "name_match": "PASS",
+      "address_legibility": "PASS",
+      "document_recency": "PASS",
+      "authenticity": "PASS"
+    },
+    "notes": "KNOWN SYSTEM GAP: expiry_date field is extracted but never checked. System returns VERIFIED on an expired ID. Requires a new checkIDExpiry() function."
+  },
+  {
+    "id": "TC-013",
+    "description": "Utility bill is 219 days old — well past the 180-day hard limit",
+    "category": "mismatch",
+    "id_extraction": {
+      "type": "NIN",
+      "name": "Amaka Nwankwo",
+      "id_number": "44433322211",
+      "date_of_birth": "1998-03-22",
+      "address_on_id": null,
+      "expiry_date": null,
+      "extraction_confidence": "HIGH",
+      "anomalies": []
+    },
+    "poa_extraction": {
+      "type": "UTILITY_BILL",
+      "issuer": "EEDC",
+      "name_on_document": "Amaka Nwankwo",
+      "address": "Plot 12, Independence Layout, Enugu",
+      "issue_date": "2025-11-01",
+      "account_number_last4": "3387",
+      "extraction_confidence": "HIGH",
+      "anomalies": []
+    },
+    "expected_verdict": "REJECTED",
+    "expected_checks": {
+      "name_match": "PASS",
+      "address_legibility": "PASS",
+      "document_recency": "FAIL",
+      "authenticity": "PASS"
+    },
+    "notes": "2025-11-01 is ~219 days before 2026-06-08 — hard FAIL, no ambiguity"
+  },
+  {
+    "id": "TC-014",
+    "description": "Name on bill is a different person who shares the same surname",
+    "category": "mismatch",
+    "id_extraction": {
+      "type": "NIN",
+      "name": "Samuel Adeyemi",
+      "id_number": "99900011122",
+      "date_of_birth": "1986-10-30",
+      "address_on_id": null,
+      "expiry_date": null,
+      "extraction_confidence": "HIGH",
+      "anomalies": []
+    },
+    "poa_extraction": {
+      "type": "UTILITY_BILL",
+      "issuer": "IBEDC",
+      "name_on_document": "Grace Adeyemi",
+      "address": "4 Awolowo Avenue, Bodija, Ibadan",
+      "issue_date": "2026-04-30",
+      "account_number_last4": "7723",
+      "extraction_confidence": "HIGH",
+      "anomalies": []
+    },
+    "expected_verdict": "REJECTED",
+    "expected_checks": {
+      "name_match": "FAIL",
+      "address_legibility": "PASS",
+      "document_recency": "PASS",
+      "authenticity": "PASS"
+    },
+    "notes": "1/2 token overlap (0.5) — surname shared but given name is different person entirely"
+  },
+  {
+    "id": "TC-015",
+    "description": "ID number is in an invalid format — system does not validate ID number patterns",
+    "category": "mismatch",
+    "id_extraction": {
+      "type": "NIN",
+      "name": "Aisha Muhammed",
+      "id_number": "ABC-INVALID-999",
+      "date_of_birth": "1999-04-05",
+      "address_on_id": null,
+      "expiry_date": null,
+      "extraction_confidence": "HIGH",
+      "anomalies": []
+    },
+    "poa_extraction": {
+      "type": "UTILITY_BILL",
+      "issuer": "KEDCO",
+      "name_on_document": "Aisha Muhammed",
+      "address": "6 Murtala Mohammed Way, Kaduna State, Nigeria",
+      "issue_date": "2026-05-05",
+      "account_number_last4": null,
+      "extraction_confidence": "HIGH",
+      "anomalies": []
+    },
+    "expected_verdict": "REJECTED",
+    "expected_checks": {
+      "name_match": "PASS",
+      "address_legibility": "PASS",
+      "document_recency": "PASS",
+      "authenticity": "PASS"
+    },
+    "notes": "KNOWN SYSTEM GAP: id_number is stored but never validated against NIN/DL format rules. System returns VERIFIED despite garbage ID number."
+  },
+  {
+    "id": "TC-016",
+    "description": "Edge case — single name only on both documents (common in Northern Nigeria)",
+    "category": "edge_case",
+    "id_extraction": {
+      "type": "NIN",
+      "name": "Yakubu",
+      "id_number": "55566677788",
+      "date_of_birth": "1983-12-01",
+      "address_on_id": null,
+      "expiry_date": null,
+      "extraction_confidence": "HIGH",
+      "anomalies": []
+    },
+    "poa_extraction": {
+      "type": "UTILITY_BILL",
+      "issuer": "KEDCO",
+      "name_on_document": "Yakubu",
+      "address": "Kofar Ruwa, Kano Municipal, Kano State",
+      "issue_date": "2026-04-15",
+      "account_number_last4": "8844",
+      "extraction_confidence": "HIGH",
+      "anomalies": []
+    },
+    "expected_verdict": "VERIFIED",
+    "expected_checks": {
+      "name_match": "PASS",
+      "address_legibility": "PASS",
+      "document_recency": "PASS",
+      "authenticity": "PASS"
+    },
+    "notes": "Single-token names: 1/1 = 1.0 overlap → PASS. System handles this correctly."
+  },
+  {
+    "id": "TC-017",
+    "description": "Hyphenated surname on ID (separate tokens), merged on utility bill — prefix match breaks",
+    "category": "edge_case",
+    "id_extraction": {
+      "type": "NIN",
+      "name": "Adaeze Obi Nwosu",
+      "id_number": "11233445566",
+      "date_of_birth": "1990-09-14",
+      "address_on_id": null,
+      "expiry_date": null,
+      "extraction_confidence": "HIGH",
+      "anomalies": []
+    },
+    "poa_extraction": {
+      "type": "UTILITY_BILL",
+      "issuer": "PHEDC",
+      "name_on_document": "Adaeze Obi-Nwosu",
+      "address": "9 Rumuobiakani Road, Port Harcourt, Rivers State",
+      "issue_date": "2026-05-03",
+      "account_number_last4": "2211",
+      "extraction_confidence": "HIGH",
+      "anomalies": []
+    },
+    "expected_verdict": "REVIEW_REQUIRED",
+    "expected_checks": {
+      "name_match": "WARN",
+      "address_legibility": "PASS",
+      "document_recency": "PASS",
+      "authenticity": "PASS"
+    },
+    "notes": "KNOWN SYSTEM LIMITATION: ID has 3 tokens ['adaeze','obi','nwosu']; PoA normalizes 'Obi-Nwosu' to 'obinwosu' (1 token). 'nwosu' cannot match 'obinwosu' in prefix check → 2/3 = 0.667 → FAIL. System rejects what should be a review case."
+  },
+  {
+    "id": "TC-018",
+    "description": "Uncommon utility provider (BEDC) — issuer name should not affect verdict",
+    "category": "edge_case",
+    "id_extraction": {
+      "type": "NIN",
+      "name": "Uzochukwu Eze",
+      "id_number": "88899900011",
+      "date_of_birth": "1977-06-28",
+      "address_on_id": "8 Uselu Lagos Road, Benin City",
+      "expiry_date": null,
+      "extraction_confidence": "HIGH",
+      "anomalies": []
+    },
+    "poa_extraction": {
+      "type": "UTILITY_BILL",
+      "issuer": "Benin Electricity Distribution Company",
+      "name_on_document": "Uzochukwu Eze",
+      "address": "8 Uselu Lagos Road, Benin City, Edo State",
+      "issue_date": "2026-04-20",
+      "account_number_last4": "5502",
+      "extraction_confidence": "HIGH",
+      "anomalies": []
+    },
+    "expected_verdict": "VERIFIED",
+    "expected_checks": {
+      "name_match": "PASS",
+      "address_legibility": "PASS",
+      "document_recency": "PASS",
+      "authenticity": "PASS"
+    },
+    "notes": "Issuer field is extracted but not checked — uncommon providers do not affect verdict. This is by design."
+  },
+  {
+    "id": "TC-019",
+    "description": "Bank statement with name but null address field — address legibility hard fails",
+    "category": "edge_case",
+    "id_extraction": {
+      "type": "DRIVERS_LICENSE",
+      "name": "Funmilayo Bankole",
+      "id_number": "AAE55667MN",
+      "date_of_birth": "1995-01-18",
+      "address_on_id": "20 Adelabu Street, Surulere, Lagos",
+      "expiry_date": "2029-01-18",
+      "extraction_confidence": "HIGH",
+      "anomalies": []
+    },
+    "poa_extraction": {
+      "type": "BANK_STATEMENT",
+      "issuer": "Zenith Bank",
+      "name_on_document": "Funmilayo Bankole",
+      "address": null,
+      "issue_date": "2026-05-10",
+      "account_number_last4": "8820",
+      "extraction_confidence": "HIGH",
+      "anomalies": []
+    },
+    "expected_verdict": "REJECTED",
+    "expected_checks": {
+      "name_match": "PASS",
+      "address_legibility": "FAIL",
+      "document_recency": "PASS",
+      "authenticity": "PASS"
+    },
+    "notes": "Null address → FAIL → REJECTED. Common with online bank statements that omit the address block."
+  },
+  {
+    "id": "TC-020",
+    "description": "Same name, but ID address and PoA address are different cities — system does not cross-check",
+    "category": "edge_case",
+    "id_extraction": {
+      "type": "NIN",
+      "name": "Ibrahim Musa",
+      "id_number": "33322211100",
+      "date_of_birth": "1982-03-07",
+      "address_on_id": "5 Awolowo Road, Ikoyi, Lagos",
+      "expiry_date": null,
+      "extraction_confidence": "HIGH",
+      "anomalies": []
+    },
+    "poa_extraction": {
+      "type": "UTILITY_BILL",
+      "issuer": "AEDC",
+      "name_on_document": "Ibrahim Musa",
+      "address": "12 New GRA, Port Harcourt, Rivers State",
+      "issue_date": "2026-04-25",
+      "account_number_last4": "6614",
+      "extraction_confidence": "HIGH",
+      "anomalies": []
+    },
+    "expected_verdict": "REVIEW_REQUIRED",
+    "expected_checks": {
+      "name_match": "PASS",
+      "address_legibility": "PASS",
+      "document_recency": "PASS",
+      "authenticity": "PASS"
+    },
+    "notes": "KNOWN SYSTEM GAP: No address cross-check between ID and PoA. System returns VERIFIED even though ID shows Lagos and PoA shows Port Harcourt. Requires a new checkAddressCrossMatch() function."
+  },
+  {
+    "id": "TC-021",
+    "description": "Document with handwritten fields — MEDIUM confidence, one anomaly flagged",
+    "category": "edge_case",
+    "id_extraction": {
+      "type": "NIN",
+      "name": "Hajiya Zainab Danladi",
+      "id_number": "66655544433",
+      "date_of_birth": "1972-11-22",
+      "address_on_id": null,
+      "expiry_date": null,
+      "extraction_confidence": "MEDIUM",
+      "anomalies": ["Handwritten fields detected in address section"]
+    },
+    "poa_extraction": {
+      "type": "UTILITY_BILL",
+      "issuer": "KEDCO",
+      "name_on_document": "Zainab Danladi",
+      "address": "Quarters 20, Wurno Road, Sokoto",
+      "issue_date": "2026-05-01",
+      "account_number_last4": null,
+      "extraction_confidence": "HIGH",
+      "anomalies": []
+    },
+    "expected_verdict": "REVIEW_REQUIRED",
+    "expected_checks": {
+      "name_match": "PASS",
+      "address_legibility": "PASS",
+      "document_recency": "PASS",
+      "authenticity": "WARN"
+    },
+    "notes": "KNOWN SYSTEM LIMITATION: 'Hajiya' is NOT in the title normalization list (only mr/mrs/ms/dr/prof/chief/alhaji/alhaja). Tokens become ['hajiya','zainab','danladi'] vs ['zainab','danladi'] → 2/3 = 0.667 → FAIL → REJECTED. The expected REVIEW_REQUIRED requires expanding the title strip list to include Hajiya, Mallam, Barrister, Engineer, etc."
+  },
+  {
+    "id": "TC-022",
+    "description": "Joint utility account — bill has two names, only one matches ID holder",
+    "category": "edge_case",
+    "id_extraction": {
+      "type": "NIN",
+      "name": "Olumide Adeyinka",
+      "id_number": "10010110101",
+      "date_of_birth": "1984-08-25",
+      "address_on_id": null,
+      "expiry_date": null,
+      "extraction_confidence": "HIGH",
+      "anomalies": []
+    },
+    "poa_extraction": {
+      "type": "UTILITY_BILL",
+      "issuer": "EKEDC",
+      "name_on_document": "Olumide Adeyinka & Yetunde Adeyinka",
+      "address": "3 Akin Adesola Street, Victoria Island, Lagos",
+      "issue_date": "2026-05-08",
+      "account_number_last4": "9900",
+      "extraction_confidence": "HIGH",
+      "anomalies": []
+    },
+    "expected_verdict": "VERIFIED",
+    "expected_checks": {
+      "name_match": "PASS",
+      "address_legibility": "PASS",
+      "document_recency": "PASS",
+      "authenticity": "PASS"
+    },
+    "notes": "'&' is stripped by normalization. ID tokens ['olumide','adeyinka'] are both present in PoA tokens — 2/2 = 1.0 PASS. System handles joint accounts correctly as long as the customer's name appears first."
+  }
+]
