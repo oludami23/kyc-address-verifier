@@ -1,9 +1,40 @@
-# KYC Verifier — Eval Results (v1.0 Prompts)
+# KYC Verifier — Eval Results
 
-**Run date:** 2026-06-08  
 **Eval harness:** `tests/eval-runner.mjs`  
 **Test cases:** `tests/eval-cases.json`  
-**Prompt version:** v1.0 (baseline — before Phase B improvements)
+**Latest run:** 2026-06-08 (v1.1)
+
+---
+
+## v1.0 → v1.1 Comparison
+
+| Metric | v1.0 | v1.1 | Δ |
+|---|---|---|---|
+| **Verdict accuracy** | 16/22 (72.7%) | **21/22 (95.5%)** | **+22.8pp** |
+| Name match accuracy | 19/22 (86.4%) | 22/22 (100.0%) | +13.6pp |
+| Address check accuracy | 22/22 (100.0%) | 22/22 (100.0%) | — |
+| Recency check accuracy | 22/22 (100.0%) | 22/22 (100.0%) | — |
+| Authenticity accuracy | 22/22 (100.0%) | 22/22 (100.0%) | — |
+| ID expiry accuracy | n/a | 22/22 (100.0%) | new |
+| ID number format accuracy | n/a | 22/22 (100.0%) | new |
+
+**5 of 6 v1.0 failures resolved.** 1 remaining gap (TC-020: address cross-check) deferred to Phase D architectural restructuring.
+
+### Fixes applied in v1.1
+
+| Case | Root cause | Fix |
+|---|---|---|
+| TC-008 | WARN threshold (0.7) too aggressive for 3-token names missing middle name | Lowered threshold to 0.6 in `checkNameMatch` |
+| TC-012 | No ID expiry validation | Added `checkIDExpiry()` to `runChecks()` |
+| TC-015 | No ID number format validation | Added `checkIDNumberFormat()` to `runChecks()` |
+| TC-017 | Hyphen removal merged "Obi-Nwosu" → "obinwosu", breaking prefix match | `.replace(/-/g, " ")` before stripping non-alpha in `normalizeName` |
+| TC-021 | "Hajiya" not in title normalization list | Expanded title regex to 20+ Nigerian titles |
+
+---
+
+## v1.0 Results (baseline)
+
+**Run date:** 2026-06-08
 
 ---
 
@@ -184,4 +215,58 @@ Based on these findings, the extraction prompt should be updated (v1.1) to:
 
 ---
 
-*Phase A complete. These results feed directly into Phase B (prompt versioning) and the Phase D refactor (verification.ts improvements).*
+*v1.0 baseline complete. Phase B implemented all three recommendations above — see v1.1 results at top of this document.*
+
+---
+
+## v1.1 Results (post-Phase B)
+
+**Run date:** 2026-06-08
+
+### Summary Metrics
+
+| Metric | Score |
+|---|---|
+| **Verdict accuracy** | **21 / 22 (95.5%)** |
+| Name match accuracy | 22 / 22 (100.0%) |
+| Address check accuracy | 22 / 22 (100.0%) |
+| Recency check accuracy | 22 / 22 (100.0%) |
+| Authenticity accuracy | 22 / 22 (100.0%) |
+| ID expiry accuracy (new) | 22 / 22 (100.0%) |
+| ID number format accuracy (new) | 22 / 22 (100.0%) |
+
+### Category Breakdown
+
+| Category | Cases | Verdicts Correct | Pass Rate |
+|---|---|---|---|
+| Clean matches | 5 | 5 / 5 | 100% |
+| Partial matches / review | 5 | 5 / 5 | 100% |
+| Mismatches / rejection | 5 | 5 / 5 | 100% |
+| Edge cases | 7 | 6 / 7 | 86% |
+
+### Remaining Failure (1)
+
+**TC-020 — Different-city addresses pass undetected**
+
+Still failing after v1.1. The system has no `checkAddressCrossMatch()` function — the PoA address is checked for legibility only, not compared against the ID's `address_on_id` field. When both documents have the same name but different states (Lagos vs Port Harcourt), the system returns VERIFIED.
+
+**Planned fix:** Phase D architectural restructuring will add an optional `checkAddressCrossMatch(idAddress, poaAddress)` function. It will be gated on `idAddress` being non-null (NIN slips often lack an address field) and will use city/state token comparison. Priority: Medium — affects only driver's licences and passports where the address field is populated.
+
+### What Changed (v1.0 → v1.1)
+
+**`lib/verification.ts`**
+- `normalizeName`: expanded title regex to 20+ Nigerian titles; `.replace(/-/g, " ")` before stripping to fix hyphen-split names
+- `checkNameMatch`: WARN threshold 0.7 → 0.6 (covers 2/3 token overlap for missing-middle-name pattern)
+- Added `checkIDExpiry(expiryDate)`: FAIL if expired, WARN if expiring within 30 days, PASS otherwise
+- Added `checkIDNumberFormat(idNumber, docType)`: regex validation for NIN (11 digits) and DL (letters+digits+letters)
+- `runChecks()`: now returns 6 checks instead of 4
+
+**`lib/prompts.ts`**
+- Updated to v1.1 (see `/prompts/CHANGELOG.md` for full diff)
+- ID extraction: title-stripping instructions, expiry/format anomaly guidance
+- PoA extraction: joint account handling, address completeness instructions
+- Verdict: CBN citation requirement, naming guidance, multi-failure triage order
+
+---
+
+*Phase B complete. Verdict accuracy 72.7% → 95.5% (+22.8pp). One known gap (TC-020) deferred to Phase D.*

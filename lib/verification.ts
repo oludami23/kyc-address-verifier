@@ -1,19 +1,33 @@
 // Pure verification logic — no AI calls, no side effects.
 // Runs after extraction, before the reasoning prompt.
+// v1.1: expanded title list, hyphen normalisation, lower WARN threshold,
+//        new checkIDExpiry and checkIDNumberFormat checks.
 
-import type { IDExtraction, PoAExtraction, Check, CheckStatus, Decision } from "./types";
+import type { IDExtraction, PoAExtraction, Check, CheckStatus, Decision, DocumentType } from "./types";
 
-// --- Name match ---
+// --- Name normalisation ---
 
 function normalizeName(name: string): string[] {
   return name
     .toLowerCase()
-    .replace(/\b(mr|mrs|ms|dr|prof|chief|alhaji|alhaja)\.?\b/g, "")
+    // v1.1: expanded title list — adds Hajiya, Mallam, Engineer, Barrister, and other
+    // common Nigerian professional and honorific titles absent from v1.0
+    .replace(
+      /\b(mr|mrs|ms|dr|prof|chief|alhaji|alhaja|hajiya|mallam|engineer|engr|barrister|barr|arch|architect|pastor|rev|reverend|deacon|deaconess|bishop|sir|dame|prince|princess|otunba|erelu|igwe|obi)\.?\b/g,
+      ""
+    )
+    // v1.1: split hyphens into spaces BEFORE stripping non-alpha characters.
+    // Without this, "Obi-Nwosu" → "obinwosu" (1 token), which breaks prefix matching
+    // against "Obi" and "Nwosu" as separate tokens. With this fix,
+    // "Obi-Nwosu" → "Obi Nwosu" → ["obi", "nwosu"] — both tokens matchable.
+    .replace(/-/g, " ")
     .replace(/[^a-z\s]/g, "")
     .trim()
     .split(/\s+/)
     .filter(Boolean);
 }
+
+// --- Name match ---
 
 export function checkNameMatch(idName: string | null, poaName: string | null): Check {
   if (!idName || !poaName) {
@@ -27,7 +41,7 @@ export function checkNameMatch(idName: string | null, poaName: string | null): C
   const idTokens = normalizeName(idName);
   const poaTokens = normalizeName(poaName);
 
-  // Count how many ID tokens appear anywhere in the PoA tokens
+  // Count how many ID tokens appear anywhere in the PoA tokens (prefix-aware)
   const matches = idTokens.filter((t) => poaTokens.some((p) => p.startsWith(t) || t.startsWith(p)));
   const overlap = matches.length / Math.max(idTokens.length, 1);
 
@@ -36,7 +50,14 @@ export function checkNameMatch(idName: string | null, poaName: string | null): C
   let status: CheckStatus;
   if (overlap === 1) {
     status = "PASS";
-  } else if (overlap >= 0.7) {
+  } else if (overlap >= 0.6) {
+    // v1.1: threshold lowered from 0.7 → 0.6.
+    // Rationale: a 3-token ID name (e.g. "Tunde Afolabi Balogun") where only the first
+    // and last tokens appear on the PoA ("Tunde Balogun") yields 2/3 = 0.667 overlap —
+    // a very common Nigerian pattern where the middle name is omitted on utility bills.
+    // 0.667 ≥ 0.6 → WARN (review) rather than FAIL (reject). A 2-token name still needs
+    // both tokens to match for WARN (1/2 = 0.5 < 0.6 → FAIL), preserving rejection for
+    // different-person scenarios like TC-014 (shared surname, different given name).
     status = "WARN";
   } else {
     status = "FAIL";
@@ -156,6 +177,96 @@ export function checkAuthenticity(id: IDExtraction, poa: PoAExtraction): Check {
   };
 }
 
+// --- ID document expiry (v1.1 — new check) ---
+//
+// Validates the expiry_date field extracted from the ID document.
+// NIN slips do not expire, so null is treated as PASS.
+// A future-but-close expiry (≤30 days) returns WARN so the officer can flag renewal.
+
+export function checkIDExpiry(expiryDate: string | null): Check {
+  if (!expiryDate) {
+    return {
+      name: "ID document expiry",
+      status: "PASS",
+      detail: "No expiry date on document — NIN slips do not expire",
+    };
+  }
+
+  const expiry = new Date(expiryDate);
+  const now = new Date();
+
+  if (expiry < now) {
+    const daysExpired = Math.round((now.getTime() - expiry.getTime()) / (1000 * 60 * 60 * 24));
+    return {
+      name: "ID document expiry",
+      status: "FAIL",
+      detail: `ID expired ${daysExpired} days ago (${expiryDate}) — document is no longer valid for KYC`,
+    };
+  }
+
+  const daysUntil = Math.round((expiry.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+  if (daysUntil <= 30) {
+    return {
+      name: "ID document expiry",
+      status: "WARN",
+      detail: `ID expires in ${daysUntil} days (${expiryDate}) — renewal recommended before account upgrade`,
+    };
+  }
+
+  return {
+    name: "ID document expiry",
+    status: "PASS",
+    detail: `ID valid until ${expiryDate} — ${daysUntil} days remaining`,
+  };
+}
+
+// --- ID number format (v1.1 — new check) ---
+//
+// Validates that the extracted id_number matches the expected format for the document type.
+// NIN: exactly 11 digits.
+// Driver's licence: 2-3 letters + 5-7 digits + 2 letters (e.g. AAD23456FG).
+// UNKNOWN/other types: PASS by default (benefit of the doubt).
+
+export function checkIDNumberFormat(idNumber: string | null, docType: DocumentType): Check {
+  if (!idNumber) {
+    return {
+      name: "ID number format",
+      status: "WARN",
+      detail: "ID number not extracted — cannot validate format",
+    };
+  }
+
+  if (docType === "NIN") {
+    const valid = /^\d{11}$/.test(idNumber);
+    return {
+      name: "ID number format",
+      status: valid ? "PASS" : "FAIL",
+      detail: valid
+        ? `NIN format valid — 11-digit number confirmed`
+        : `NIN format invalid — expected 11 digits, got '${idNumber}'`,
+    };
+  }
+
+  if (docType === "DRIVERS_LICENSE") {
+    // Nigerian DL format: 2-3 uppercase letters + 5-7 digits + 2 uppercase letters
+    const valid = /^[A-Z]{2,3}\d{5,7}[A-Z]{2}$/i.test(idNumber);
+    return {
+      name: "ID number format",
+      status: valid ? "PASS" : "FAIL",
+      detail: valid
+        ? `Driver's licence number format valid`
+        : `Driver's licence number format unexpected — got '${idNumber}'`,
+    };
+  }
+
+  // Passport and other document types — format not validated
+  return {
+    name: "ID number format",
+    status: "PASS",
+    detail: `ID number present: '${idNumber}' — format check not applicable for ${docType}`,
+  };
+}
+
 // --- Decision aggregation ---
 
 export function aggregateDecision(
@@ -180,7 +291,7 @@ export function aggregateDecision(
   return { decision: "VERIFIED", confidence: Math.round(baseConfidence * 0.95 * 100) / 100 };
 }
 
-// --- Main orchestrator (called from Day 2 API route) ---
+// --- Main orchestrator ---
 
 export function runChecks(id: IDExtraction, poa: PoAExtraction): Check[] {
   return [
@@ -188,5 +299,7 @@ export function runChecks(id: IDExtraction, poa: PoAExtraction): Check[] {
     checkAddressLegibility(poa.address),
     checkDocumentRecency(poa.issue_date),
     checkAuthenticity(id, poa),
+    checkIDExpiry(id.expiry_date),           // v1.1: new
+    checkIDNumberFormat(id.id_number, id.type), // v1.1: new
   ];
 }

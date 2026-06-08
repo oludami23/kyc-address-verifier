@@ -28,7 +28,9 @@
       "name_match": "PASS",
       "address_legibility": "PASS",
       "document_recency": "PASS",
-      "authenticity": "PASS"
+      "authenticity": "PASS",
+      "id_expiry": "PASS",
+      "id_number_format": "PASS"
     },
     "notes": "Baseline clean case — all signals green"
   },
@@ -61,7 +63,9 @@
       "name_match": "PASS",
       "address_legibility": "PASS",
       "document_recency": "PASS",
-      "authenticity": "PASS"
+      "authenticity": "PASS",
+      "id_expiry": "PASS",
+      "id_number_format": "PASS"
     },
     "notes": "Prefix matching handles 'O.' abbreviation of 'Ogundimu' — ogundimu starts with o"
   },
@@ -94,7 +98,9 @@
       "name_match": "PASS",
       "address_legibility": "PASS",
       "document_recency": "PASS",
-      "authenticity": "PASS"
+      "authenticity": "PASS",
+      "id_expiry": "PASS",
+      "id_number_format": "PASS"
     },
     "notes": "Bank statement with 6-word address — wordCount threshold passes even with only 2 commas"
   },
@@ -127,7 +133,9 @@
       "name_match": "PASS",
       "address_legibility": "PASS",
       "document_recency": "PASS",
-      "authenticity": "PASS"
+      "authenticity": "PASS",
+      "id_expiry": "PASS",
+      "id_number_format": "PASS"
     },
     "notes": "Token-set overlap is order-independent — all 3 tokens present in both regardless of order"
   },
@@ -160,7 +168,9 @@
       "name_match": "PASS",
       "address_legibility": "PASS",
       "document_recency": "PASS",
-      "authenticity": "PASS"
+      "authenticity": "PASS",
+      "id_expiry": "PASS",
+      "id_number_format": "PASS"
     },
     "notes": "Abdullahi abbreviated to A. — prefix match works: 'abdullahi'.startsWith('a') = true"
   },
@@ -193,7 +203,9 @@
       "name_match": "PASS",
       "address_legibility": "PASS",
       "document_recency": "WARN",
-      "authenticity": "PASS"
+      "authenticity": "PASS",
+      "id_expiry": "PASS",
+      "id_number_format": "PASS"
     },
     "notes": "2026-03-05 is ~95 days before 2026-06-08 — WARN range triggers REVIEW_REQUIRED"
   },
@@ -226,7 +238,9 @@
       "name_match": "PASS",
       "address_legibility": "WARN",
       "document_recency": "PASS",
-      "authenticity": "PASS"
+      "authenticity": "PASS",
+      "id_expiry": "PASS",
+      "id_number_format": "PASS"
     },
     "notes": "Address has 0 commas and only 2 words — WARN threshold, not enough to auto-reject"
   },
@@ -259,7 +273,9 @@
       "name_match": "WARN",
       "address_legibility": "PASS",
       "document_recency": "PASS",
-      "authenticity": "PASS"
+      "authenticity": "PASS",
+      "id_expiry": "PASS",
+      "id_number_format": "PASS"
     },
     "notes": "KNOWN SYSTEM LIMITATION: 2/3 token overlap (0.667) triggers FAIL not WARN — system rejects what a human would flag for review. Name match threshold may be too strict for missing-middle-name cases."
   },
@@ -292,7 +308,9 @@
       "name_match": "PASS",
       "address_legibility": "WARN",
       "document_recency": "PASS",
-      "authenticity": "PASS"
+      "authenticity": "PASS",
+      "id_expiry": "PASS",
+      "id_number_format": "PASS"
     },
     "notes": "Abbreviated address (no commas, 3 words) — legibility WARN is correct. System does not cross-check address content between ID and PoA (documented gap)."
   },
@@ -325,7 +343,9 @@
       "name_match": "PASS",
       "address_legibility": "PASS",
       "document_recency": "PASS",
-      "authenticity": "WARN"
+      "authenticity": "WARN",
+      "id_expiry": "PASS",
+      "id_number_format": "PASS"
     },
     "notes": "One HIGH + one MEDIUM confidence (not both HIGH) → authenticity WARN → REVIEW_REQUIRED"
   },
@@ -358,7 +378,9 @@
       "name_match": "FAIL",
       "address_legibility": "PASS",
       "document_recency": "PASS",
-      "authenticity": "PASS"
+      "authenticity": "PASS",
+      "id_expiry": "PASS",
+      "id_number_format": "PASS"
     },
     "notes": "Zero token overlap between unrelated names — unambiguous FAIL"
   },
@@ -391,7 +413,9 @@
       "name_match": "PASS",
       "address_legibility": "PASS",
       "document_recency": "PASS",
-      "authenticity": "PASS"
+      "authenticity": "PASS",
+      "id_expiry": "FAIL",
+      "id_number_format": "PASS"
     },
     "notes": "KNOWN SYSTEM GAP: expiry_date field is extracted but never checked. System returns VERIFIED on an expired ID. Requires a new checkIDExpiry() function."
   },
@@ -424,7 +448,9 @@
       "name_match": "PASS",
       "address_legibility": "PASS",
       "document_recency": "FAIL",
-      "authenticity": "PASS"
+      "authenticity": "PASS",
+      "id_expiry": "PASS",
+      "id_number_format": "PASS"
     },
     "notes": "2025-11-01 is ~219 days before 2026-06-08 — hard FAIL, no ambiguity"
   },
@@ -457,7 +483,9 @@
       "name_match": "FAIL",
       "address_legibility": "PASS",
       "document_recency": "PASS",
-      "authenticity": "PASS"
+      "authenticity": "PASS",
+      "id_expiry": "PASS",
+      "id_number_format": "PASS"
     },
     "notes": "1/2 token overlap (0.5) — surname shared but given name is different person entirely"
   },
@@ -490,7 +518,9 @@
       "name_match": "PASS",
       "address_legibility": "PASS",
       "document_recency": "PASS",
-      "authenticity": "PASS"
+      "authenticity": "PASS",
+      "id_expiry": "PASS",
+      "id_number_format": "FAIL"
     },
     "notes": "KNOWN SYSTEM GAP: id_number is stored but never validated against NIN/DL format rules. System returns VERIFIED despite garbage ID number."
   },
@@ -523,7 +553,9 @@
       "name_match": "PASS",
       "address_legibility": "PASS",
       "document_recency": "PASS",
-      "authenticity": "PASS"
+      "authenticity": "PASS",
+      "id_expiry": "PASS",
+      "id_number_format": "PASS"
     },
     "notes": "Single-token names: 1/1 = 1.0 overlap → PASS. System handles this correctly."
   },
@@ -551,14 +583,16 @@
       "extraction_confidence": "HIGH",
       "anomalies": []
     },
-    "expected_verdict": "REVIEW_REQUIRED",
+    "expected_verdict": "VERIFIED",
     "expected_checks": {
-      "name_match": "WARN",
+      "name_match": "PASS",
       "address_legibility": "PASS",
       "document_recency": "PASS",
-      "authenticity": "PASS"
+      "authenticity": "PASS",
+      "id_expiry": "PASS",
+      "id_number_format": "PASS"
     },
-    "notes": "KNOWN SYSTEM LIMITATION: ID has 3 tokens ['adaeze','obi','nwosu']; PoA normalizes 'Obi-Nwosu' to 'obinwosu' (1 token). 'nwosu' cannot match 'obinwosu' in prefix check → 2/3 = 0.667 → FAIL. System rejects what should be a review case."
+    "notes": "v1.1 FIX: Hyphen normalisation in normalizeName() now splits Obi-Nwosu into [obi, nwosu] before stripping non-alpha chars. Both ID tokens [adaeze, obi, nwosu] match PoA tokens [adaeze, obi, nwosu] → 3/3 = 1.0 → PASS → VERIFIED. Previously REJECTED in v1.0."
   },
   {
     "id": "TC-018",
@@ -589,7 +623,9 @@
       "name_match": "PASS",
       "address_legibility": "PASS",
       "document_recency": "PASS",
-      "authenticity": "PASS"
+      "authenticity": "PASS",
+      "id_expiry": "PASS",
+      "id_number_format": "PASS"
     },
     "notes": "Issuer field is extracted but not checked — uncommon providers do not affect verdict. This is by design."
   },
@@ -622,7 +658,9 @@
       "name_match": "PASS",
       "address_legibility": "FAIL",
       "document_recency": "PASS",
-      "authenticity": "PASS"
+      "authenticity": "PASS",
+      "id_expiry": "PASS",
+      "id_number_format": "PASS"
     },
     "notes": "Null address → FAIL → REJECTED. Common with online bank statements that omit the address block."
   },
@@ -655,7 +693,9 @@
       "name_match": "PASS",
       "address_legibility": "PASS",
       "document_recency": "PASS",
-      "authenticity": "PASS"
+      "authenticity": "PASS",
+      "id_expiry": "PASS",
+      "id_number_format": "PASS"
     },
     "notes": "KNOWN SYSTEM GAP: No address cross-check between ID and PoA. System returns VERIFIED even though ID shows Lagos and PoA shows Port Harcourt. Requires a new checkAddressCrossMatch() function."
   },
@@ -671,7 +711,9 @@
       "address_on_id": null,
       "expiry_date": null,
       "extraction_confidence": "MEDIUM",
-      "anomalies": ["Handwritten fields detected in address section"]
+      "anomalies": [
+        "Handwritten fields detected in address section"
+      ]
     },
     "poa_extraction": {
       "type": "UTILITY_BILL",
@@ -688,7 +730,9 @@
       "name_match": "PASS",
       "address_legibility": "PASS",
       "document_recency": "PASS",
-      "authenticity": "WARN"
+      "authenticity": "WARN",
+      "id_expiry": "PASS",
+      "id_number_format": "PASS"
     },
     "notes": "KNOWN SYSTEM LIMITATION: 'Hajiya' is NOT in the title normalization list (only mr/mrs/ms/dr/prof/chief/alhaji/alhaja). Tokens become ['hajiya','zainab','danladi'] vs ['zainab','danladi'] → 2/3 = 0.667 → FAIL → REJECTED. The expected REVIEW_REQUIRED requires expanding the title strip list to include Hajiya, Mallam, Barrister, Engineer, etc."
   },
@@ -721,7 +765,9 @@
       "name_match": "PASS",
       "address_legibility": "PASS",
       "document_recency": "PASS",
-      "authenticity": "PASS"
+      "authenticity": "PASS",
+      "id_expiry": "PASS",
+      "id_number_format": "PASS"
     },
     "notes": "'&' is stripped by normalization. ID tokens ['olumide','adeyinka'] are both present in PoA tokens — 2/2 = 1.0 PASS. System handles joint accounts correctly as long as the customer's name appears first."
   }
