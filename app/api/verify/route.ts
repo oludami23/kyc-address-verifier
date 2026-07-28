@@ -24,79 +24,87 @@ import type { IDExtraction, PoAExtraction, VerificationResult, RegulationRef } f
 //   (real upload, no scenario)        → vision extraction + reasoning (3 Claude calls)
 // ---------------------------------------------------------------------------
 
-const MOCK_EXTRACTIONS: Record<string, { id: IDExtraction; poa: PoAExtraction }> = {
-  verified: {
-    id: {
-      type: "NIN",
-      name: "OLUMIDE ADENIYI ADEYEMI",
-      id_number: "12345678901",
-      date_of_birth: "1990-03-15",
-      address_on_id: "14 Adeola Odeku Street, Victoria Island, Lagos",
-      expiry_date: null,
-      extraction_confidence: "HIGH",
-      anomalies: [],
-    },
-    poa: {
-      type: "UTILITY_BILL",
-      issuer: "IKEDC",
-      name_on_document: "O. A. ADEYEMI",
-      address: "14 Adeola Odeku Street, Victoria Island, Lagos",
-      issue_date: "2026-04-20",
-      account_number_last4: "4821",
-      extraction_confidence: "HIGH",
-      anomalies: [],
-    },
-  },
+function daysAgo(n: number): string {
+  const d = new Date();
+  d.setDate(d.getDate() - n);
+  return d.toISOString().slice(0, 10);
+}
 
-  review: {
-    id: {
-      type: "DRIVERS_LICENSE",
-      name: "OLUMIDE ADENIYI JAMES ADEYEMI",
-      id_number: "AAD23456FG",
-      date_of_birth: "1988-07-22",
-      address_on_id: "7 Bode Thomas Street, Surulere, Lagos",
-      expiry_date: "2028-07-21",
-      extraction_confidence: "MEDIUM",
-      anomalies: ["Slight glare obscuring date of birth field"],
+function getMockExtractions(): Record<string, { id: IDExtraction; poa: PoAExtraction }> {
+  return {
+    verified: {
+      id: {
+        type: "NIN",
+        name: "OLUMIDE ADENIYI ADEYEMI",
+        id_number: "12345678901",
+        date_of_birth: "1990-03-15",
+        address_on_id: "14 Adeola Odeku Street, Victoria Island, Lagos",
+        expiry_date: null,
+        extraction_confidence: "HIGH",
+        anomalies: [],
+      },
+      poa: {
+        type: "UTILITY_BILL",
+        issuer: "IKEDC",
+        name_on_document: "O. A. ADEYEMI",
+        address: "14 Adeola Odeku Street, Victoria Island, Lagos",
+        issue_date: daysAgo(30),
+        account_number_last4: "4821",
+        extraction_confidence: "HIGH",
+        anomalies: [],
+      },
     },
-    poa: {
-      type: "UTILITY_BILL",
-      issuer: "PHCN",
-      name_on_document: "O. A. ADEYEMI",
-      address: "7 Bode Thomas Street, Surulere, Lagos State",
-      issue_date: "2026-01-11",
-      account_number_last4: null,
-      extraction_confidence: "HIGH",
-      anomalies: [],
-    },
-  },
 
-  reject: {
-    id: {
-      type: "NIN",
-      name: "CHIDINMA UCHENNA OKONKWO",
-      id_number: "98765432100",
-      date_of_birth: "1995-11-03",
-      address_on_id: "22 Awolowo Road, Ikoyi, Lagos",
-      expiry_date: null,
-      extraction_confidence: "LOW",
-      anomalies: [
-        "Blurry NIN number field — digits not fully legible",
-        "Photo area shows compression artefacts inconsistent with official NIN print quality",
-      ],
+    review: {
+      id: {
+        type: "DRIVERS_LICENSE",
+        name: "OLUMIDE ADENIYI JAMES ADEYEMI",
+        id_number: "AAD23456FG",
+        date_of_birth: "1988-07-22",
+        address_on_id: "7 Bode Thomas Street, Surulere, Lagos",
+        expiry_date: "2028-07-21",
+        extraction_confidence: "MEDIUM",
+        anomalies: ["Slight glare obscuring date of birth field"],
+      },
+      poa: {
+        type: "UTILITY_BILL",
+        issuer: "PHCN",
+        name_on_document: "O. A. ADEYEMI",
+        address: "7 Bode Thomas Street, Surulere, Lagos State",
+        issue_date: daysAgo(85),
+        account_number_last4: null,
+        extraction_confidence: "HIGH",
+        anomalies: [],
+      },
     },
-    poa: {
-      type: "UTILITY_BILL",
-      issuer: "DSTV",
-      name_on_document: "JOHN ADEBAYO SMITH",
-      address: "Block 5 Flat 2",
-      issue_date: "2025-06-15",
-      account_number_last4: "0017",
-      extraction_confidence: "HIGH",
-      anomalies: [],
+
+    reject: {
+      id: {
+        type: "NIN",
+        name: "CHIDINMA UCHENNA OKONKWO",
+        id_number: "98765432100",
+        date_of_birth: "1995-11-03",
+        address_on_id: "22 Awolowo Road, Ikoyi, Lagos",
+        expiry_date: null,
+        extraction_confidence: "LOW",
+        anomalies: [
+          "Blurry NIN number field — digits not fully legible",
+          "Photo area shows compression artefacts inconsistent with official NIN print quality",
+        ],
+      },
+      poa: {
+        type: "UTILITY_BILL",
+        issuer: "DSTV",
+        name_on_document: "JOHN ADEBAYO SMITH",
+        address: "Block 5 Flat 2",
+        issue_date: daysAgo(120),
+        account_number_last4: "0017",
+        extraction_confidence: "HIGH",
+        anomalies: [],
+      },
     },
-  },
-};
+  };
+}
 
 function stripInternalFields(id: IDExtraction, poa: PoAExtraction): {
   id_document: VerificationResult["id_document"];
@@ -168,7 +176,7 @@ export async function POST(request: NextRequest) {
         let poaExtraction: PoAExtraction;
 
         if (scenario) {
-          const fixture = MOCK_EXTRACTIONS[scenario] ?? MOCK_EXTRACTIONS.verified;
+          const fixture = getMockExtractions()[scenario] ?? getMockExtractions().verified;
           idExtraction = fixture.id;
           poaExtraction = fixture.poa;
           console.log(`[KYC] Scenario "${scenario}" — mock extractions, real reasoning`);
